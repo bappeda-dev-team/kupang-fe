@@ -13,20 +13,16 @@ interface OptionTypeString {
     value: string;
     label: string;
 }
+
 interface FormValue {
-    id: string;
+    id?: number;
     kode_opd: string;
     nama_opd: string;
-    singkatan: string;
-    alamat: string;
-    telepon: string;
-    fax: string;
-    email: string;
-    website: string;
-    nama_kepala_opd: string;
-    nip_kepala_opd: string;
-    pangkat_kepala: string;
-    id_lembaga: OptionTypeString;
+    nama_kepala_perangkat_daerah?: string;
+    nip_kepala_perangkat_daerah?: string;
+    pangkat_kepala_perangkat_daerah?: string;
+    kode_lembaga?: string;
+    id_lembaga?: OptionTypeString;
 }
 
 interface lembaga {
@@ -59,14 +55,14 @@ export const FormMasterOpd = () => {
           //key : value
           kode_opd : data.kode_opd,
           nama_opd : data.nama_opd,
-          nama_kepala_opd : data.nama_kepala_opd,
-          nip_kepala_opd : data.nip_kepala_opd,
-          pangkat_kepala : data.pangkat_kepala,
-          id_lembaga : data.id_lembaga?.value,
+          nama_kepala_perangkat_daerah : data.nama_kepala_perangkat_daerah,
+          nip_kepala_perangkat_daerah : data.nip_kepala_perangkat_daerah,
+          pangkat_kepala_perangkat_daerah : data.pangkat_kepala_perangkat_daerah,
+          kode_lembaga : data.id_lembaga?.value || data.kode_lembaga,
       };
     //   console.log(formData);
       try{
-          const response = await fetch(`${API_URL}/opd/create`, {
+          const response = await fetch(`${API_URL}/opds`, {
               method: "POST",
               headers: {
                 Authorization: `${token}`,
@@ -89,7 +85,7 @@ export const FormMasterOpd = () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       setIsLoading(true);
       try{ 
-        const response = await fetch(`${API_URL}/lembaga/findall`,{
+        const response = await fetch(`${API_URL}/lembagas`,{
           method: 'GET',
           headers: {
             Authorization: `${token}`,
@@ -100,9 +96,10 @@ export const FormMasterOpd = () => {
           throw new Error('cant fetch data opd');
         }
         const data = await response.json();
-        const opd = data.data.map((item: any) => ({
-          value : item.id,
-          label : item.nama_lembaga,
+        const list = Array.isArray(data) ? data : data?.data ?? [];
+        const opd = list.map((item: any) => ({
+          value : item.kode_lembaga,
+          label : item.kode_lembaga,
         }));
         setOpdOption(opd);
       } catch (err){
@@ -195,20 +192,20 @@ export const FormMasterOpd = () => {
                 <div className="flex flex-col py-3">
                     <label
                         className="uppercase text-xs font-bold text-gray-700 my-2"
-                        htmlFor="nama_kepala_opd"
+                        htmlFor="nama_kepala_perangkat_daerah"
                     >
                         Nama Kepala Perangkat Daerah:
                     </label>
                     <Controller
-                        name="nama_kepala_opd"
+                        name="nama_kepala_perangkat_daerah"
                         control={control}
-                        rules={{ required: "Nama Kepala harus terisi" }}
+                        rules={{ required: "Nama Kepala Perangkat Daerah harus terisi" }}
                         render={({ field }) => (
                             <>
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="nama_kepala_opd"
+                                    id="nama_kepala_perangkat_daerah"
                                     type="text"
                                     placeholder="masukkan Nama Kepala Perangkat Daerah"
                                     value={field.value || NamaKepalaOpd}
@@ -217,9 +214,9 @@ export const FormMasterOpd = () => {
                                         setNamaKepalaOpd(e.target.value);
                                     }}
                                 />
-                                {errors.nama_kepala_opd ?
+                                {errors.nama_kepala_perangkat_daerah ?
                                     <h1 className="text-red-500">
-                                    {errors.nama_kepala_opd.message}
+                                    {errors.nama_kepala_perangkat_daerah.message}
                                     </h1>
                                     :
                                     <h1 className="text-slate-300 text-xs">*Nama Kepala Perangkat Daerah Harus Terisi</h1>
@@ -231,12 +228,12 @@ export const FormMasterOpd = () => {
                 <div className="flex flex-col py-3">
                     <label
                         className="uppercase text-xs font-bold text-gray-700 my-2"
-                        htmlFor="nip_kepala_opd"
+                        htmlFor="nip_kepala_perangkat_daerah"
                     >
                         NIP Kepala Perangkat Daerah :
                     </label>
                     <Controller
-                        name="nip_kepala_opd"
+                        name="nip_kepala_perangkat_daerah"
                         control={control}
                         rules={{ required: "NIP Kepala Perangkat Daerah harus terisi" }}
                         render={({ field }) => (
@@ -244,7 +241,7 @@ export const FormMasterOpd = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="nip_kepala_opd"
+                                    id="nip_kepala_perangkat_daerah"
                                     type="text"
                                     placeholder="masukkan NIP Kepala"
                                     value={field.value || NipKepalaOpd}
@@ -253,9 +250,9 @@ export const FormMasterOpd = () => {
                                         setNipKepalaOpd(e.target.value);
                                     }}
                                 />
-                                {errors.nip_kepala_opd ?
+                                {errors.nip_kepala_perangkat_daerah ?
                                     <h1 className="text-red-500">
-                                    {errors.nip_kepala_opd.message}
+                                    {errors.nip_kepala_perangkat_daerah.message}
                                     </h1>
                                     :
                                     <h1 className="text-slate-300 text-xs">*NIP Kepala Perangkat Daerah Harus Terisi</h1>
@@ -267,12 +264,12 @@ export const FormMasterOpd = () => {
                 <div className="flex flex-col py-3">
                     <label
                         className="uppercase text-xs font-bold text-gray-700 my-2"
-                        htmlFor="pangkat_kepala"
+                        htmlFor="pangkat_kepala_perangkat_daerah"
                     >
                         Pangkat Kepala Perangkat Daerah :
                     </label>
                     <Controller
-                        name="pangkat_kepala"
+                        name="pangkat_kepala_perangkat_daerah"
                         control={control}
                         rules={{ required: "Pangkat Kepala Perangkat Daerah harus terisi" }}
                         render={({ field }) => (
@@ -280,7 +277,7 @@ export const FormMasterOpd = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="pangkat_kepala"
+                                    id="pangkat_kepala_perangkat_daerah"
                                     type="text"
                                     placeholder="masukkan Pangkat Kepala Perangkat Daerah"
                                     value={field.value || PangkatKepalaOpd}
@@ -289,9 +286,9 @@ export const FormMasterOpd = () => {
                                         setPangkatKepalaOpd(e.target.value);
                                     }}
                                 />
-                                {errors.pangkat_kepala ?
+                                {errors.pangkat_kepala_perangkat_daerah ?
                                     <h1 className="text-red-500">
-                                    {errors.pangkat_kepala.message}
+                                    {errors.pangkat_kepala_perangkat_daerah.message}
                                     </h1>
                                     :
                                     <h1 className="text-slate-300 text-xs">*Pangkat Kepala Perangkat Daerah Harus Terisi</h1>
@@ -345,7 +342,10 @@ export const FormMasterOpd = () => {
                                         {errors.id_lembaga.message}
                                     </h1>
                                 :
-                                    <h1 className="text-slate-300 text-xs">*Lembaga Harus Terisi</h1>
+                                    <div className="flex flex-col text-xs text-slate-300">
+                                        <span>*Lembaga Harus Terisi</span>
+                                        <span className="text-[11px] text-slate-400">Jika lembaga sebelumnya dihapus, pilih lembaga baru.</span>
+                                    </div>
                                 }
                             </>
                             )}
@@ -384,7 +384,8 @@ export const FormEditMasterOpd = () => {
     const [loading, setLoading] = useState<boolean | null>(null);
     const [IsLoading, setIsLoading] = useState<boolean>(false);
     const [idNull, setIdNull] = useState<boolean | null>(null);
-    const {id} = useParams();
+    const { id } = useParams();
+    const numericId = Array.isArray(id) ? Number(id[0]) : Number(id);
     const [OpdOption, setOpdOption] = useState<OptionTypeString[]>([]);
     const router = useRouter();
     const token = getToken();
@@ -393,7 +394,7 @@ export const FormEditMasterOpd = () => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       setIsLoading(true);
       try{ 
-        const response = await fetch(`${API_URL}/lembaga/findall`,{
+        const response = await fetch(`${API_URL}/lembagas`,{
           method: 'GET',
           headers: {
             Authorization: `${token}`,
@@ -404,9 +405,10 @@ export const FormEditMasterOpd = () => {
           throw new Error('cant fetch data opd');
         }
         const data = await response.json();
-        const opd = data.data.map((item: any) => ({
-          value : item.id,
-          label : item.nama_lembaga,
+        const list = Array.isArray(data) ? data : data?.data ?? [];
+        const opd = list.map((item: any) => ({
+          value : item.kode_lembaga ?? item.id,
+          label : item.kode_lembaga ?? item.id,
         }));
         setOpdOption(opd);
       } catch (err){
@@ -418,23 +420,29 @@ export const FormEditMasterOpd = () => {
 
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        if (Number.isNaN(numericId)) {
+            setError('id tidak valid');
+            setLoading(false);
+            return;
+        }
         const fetchIdOpd = async() => {
             setLoading(true);
             try{
-                const response = await fetch(`${API_URL}/opd/detail/${id}`, {
+                const response = await fetch(`${API_URL}/opds/${numericId}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                       },
-                });
+        });
                 if(!response.ok){
                     throw new Error('terdapat kesalahan di koneksi backend');
                 }
                 const result = await response.json();
-                if(result.code == 500){
+                const payload = result?.data ?? result;
+                if(result.code == 500 || payload == null){
                     setIdNull(true);
                 } else {
-                    const data = result.data;
+                    const data = payload;
                     if(data.kode_opd){
                         setKodeOpd(data.kode_opd);
                         reset((prev) => ({ ...prev, kode_opd: data.kode_opd }))
@@ -443,25 +451,36 @@ export const FormEditMasterOpd = () => {
                         setNamaOpd(data.nama_opd);
                         reset((prev) => ({ ...prev, nama_opd: data.nama_opd }))
                     }
-                    if(data.nama_kepala_opd){
-                        setNamaKepalaOpd(data.nama_kepala_opd);
-                        reset((prev) => ({ ...prev, nama_kepala_opd: data.nama_kepala_opd }))
+                    if(data.nama_kepala_perangkat_daerah){
+                        const kepala = data.nama_kepala_perangkat_daerah;
+                        setNamaKepalaOpd(kepala);
+                        reset((prev) => ({ ...prev, nama_kepala_perangkat_daerah: kepala }))
                     }
-                    if(data.pangkat_kepala){
-                        setPangkatKepalaOpd(data.pangkat_kepala);
-                        reset((prev) => ({ ...prev, pangkat_kepala: data.pangkat_kepala }))
+                    if(data.pangkat_kepala_perangkat_daerah){
+                        const pangkat = data.pangkat_kepala_perangkat_daerah;
+                        setPangkatKepalaOpd(pangkat);
+                        reset((prev) => ({ ...prev, pangkat_kepala_perangkat_daerah: pangkat }))
                     }
-                    if(data.nip_kepala_opd){
-                        setNipKepalaOpd(data.nip_kepala_opd);
-                        reset((prev) => ({ ...prev, nip_kepala_opd: data.nip_kepala_opd }))
+                    if(data.nip_kepala_perangkat_daerah){
+                        const nip = data.nip_kepala_perangkat_daerah;
+                        setNipKepalaOpd(nip);
+                        reset((prev) => ({ ...prev, nip_kepala_perangkat_daerah: nip }))
                     }
-                    if(data.id_lembaga){
-                        const lembaga = {
-                            value: data.id_lembaga.id,
-                            label: data.id_lembaga.nama_lembaga,
+                    if(data.kode_lembaga || data.id_lembaga){
+                        const lembaga = data.kode_lembaga
+                            ? { value: data.kode_lembaga, label: data.kode_lembaga }
+                            : {
+                                value: data.id_lembaga?.id,
+                                label: data.id_lembaga?.nama_lembaga,
+                              };
+                        if(lembaga.value){
+                            setKodeLembaga(lembaga as OptionTypeString);
+                            reset((prev) => ({ ...prev, id_lembaga: lembaga as OptionTypeString }))
                         }
-                        setKodeLembaga(lembaga);
-                        reset((prev) => ({ ...prev, id_lembaga: lembaga }))
+                    } else {
+                        // lembaga sudah dihapus → biarkan kosong, user wajib pilih baru sebelum submit
+                        setKodeLembaga(null);
+                        reset((prev) => ({ ...prev, id_lembaga: undefined }));
                     }
                 }
             } catch(err) {
@@ -471,22 +490,37 @@ export const FormEditMasterOpd = () => {
             }
         }
         fetchIdOpd();
-    },[id, reset, token]);
+    },[id, numericId, reset, token]);
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
+      if (Number.isNaN(numericId)) {
+        setError('id tidak valid');
+        return;
+      }
+      if (
+        !data.kode_opd ||
+        !data.nama_opd ||
+        !data.nama_kepala_perangkat_daerah ||
+        !data.nip_kepala_perangkat_daerah ||
+        !data.pangkat_kepala_perangkat_daerah ||
+        !(data.id_lembaga?.value || data.kode_lembaga)
+      ) {
+        setError('Lengkapi seluruh field wajib sebelum menyimpan');
+        return;
+      }
+
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       const formData = {
-            //key : value
-            kode_opd : data.kode_opd,
-            nama_opd : data.nama_opd,
-            nama_kepala_opd : data.nama_kepala_opd,
-            nip_kepala_opd : data.nip_kepala_opd,
-            pangkat_kepala : data.pangkat_kepala,
-            id_lembaga : data.id_lembaga?.value,
+            id: numericId,
+            kode_opd: data.kode_opd,
+            nama_opd: data.nama_opd,
+            nama_kepala_perangkat_daerah: data.nama_kepala_perangkat_daerah,
+            nip_kepala_perangkat_daerah: data.nip_kepala_perangkat_daerah,
+            pangkat_kepala_perangkat_daerah: data.pangkat_kepala_perangkat_daerah,
+            kode_lembaga: data.id_lembaga?.value || data.kode_lembaga,
       };
-      console.log(formData);
       try{
-        const response = await fetch(`${API_URL}/opd/update/${id}`, {
+        const response = await fetch(`${API_URL}/opds/${numericId}`, {
             method: "PUT",
             headers: {
               Authorization: `${token}`,
@@ -495,7 +529,7 @@ export const FormEditMasterOpd = () => {
             body: JSON.stringify(formData),
         });
         if(response.ok){
-            AlertNotification("Berhasil", "Berhasil menambahkan data master perangkat daerah", "success", 1000);
+            AlertNotification("Berhasil", "Berhasil mengubah data master perangkat daerah", "success", 1000);
             router.push("/DataMaster/masteropd");
         } else {
             AlertNotification("Gagal", "terdapat kesalahan pada backend / database server", "error", 2000);
@@ -610,12 +644,12 @@ export const FormEditMasterOpd = () => {
                     <div className="flex flex-col py-3">
                         <label
                             className="uppercase text-xs font-bold text-gray-700 my-2"
-                            htmlFor="nama_kepala_opd"
+                            htmlFor="nama_kepala_perangkat_daerah"
                         >
                             Nama Kepala Perangkat Daerah :
                         </label>
                         <Controller
-                            name="nama_kepala_opd"
+                            name="nama_kepala_perangkat_daerah"
                             control={control}
                             rules={{ required: "Nama Kepala Perangkat Daerah harus terisi" }}
                             render={({ field }) => (
@@ -623,7 +657,7 @@ export const FormEditMasterOpd = () => {
                                     <input
                                         {...field}
                                         className="border px-4 py-2 rounded-lg"
-                                        id="nama_kepala_opd"
+                                        id="nama_kepala_perangkat_daerah"
                                         type="text"
                                         placeholder="masukkan Nama Kepala Perangkat Daerah"
                                         value={field.value || NamaKepalaOpd}
@@ -632,9 +666,9 @@ export const FormEditMasterOpd = () => {
                                             setNamaKepalaOpd(e.target.value);
                                         }}
                                     />
-                                    {errors.nama_kepala_opd ?
+                                    {errors.nama_kepala_perangkat_daerah ?
                                         <h1 className="text-red-500">
-                                        {errors.nama_kepala_opd.message}
+                                        {errors.nama_kepala_perangkat_daerah.message}
                                         </h1>
                                         :
                                         <h1 className="text-slate-300 text-xs">*Nama Kepala Perangkat Daerah Harus Terisi</h1>
@@ -646,12 +680,12 @@ export const FormEditMasterOpd = () => {
                     <div className="flex flex-col py-3">
                         <label
                             className="uppercase text-xs font-bold text-gray-700 my-2"
-                            htmlFor="nip_kepala_opd"
+                            htmlFor="nip_kepala_perangkat_daerah"
                         >
                             NIP Kepala Perangkat Daerah :
                         </label>
                         <Controller
-                            name="nip_kepala_opd"
+                            name="nip_kepala_perangkat_daerah"
                             control={control}
                             rules={{ required: "NIP Kepala Perangkat Daerah harus terisi" }}
                             render={({ field }) => (
@@ -659,7 +693,7 @@ export const FormEditMasterOpd = () => {
                                     <input
                                         {...field}
                                         className="border px-4 py-2 rounded-lg"
-                                        id="nip_kepala_opd"
+                                        id="nip_kepala_perangkat_daerah"
                                         type="text"
                                         placeholder="masukkan NIP Kepala Perangkat Daerah"
                                         value={field.value || NipKepalaOpd}
@@ -668,9 +702,9 @@ export const FormEditMasterOpd = () => {
                                             setNipKepalaOpd(e.target.value);
                                         }}
                                     />
-                                    {errors.nip_kepala_opd ?
+                                    {errors.nip_kepala_perangkat_daerah ?
                                         <h1 className="text-red-500">
-                                        {errors.nip_kepala_opd.message}
+                                        {errors.nip_kepala_perangkat_daerah.message}
                                         </h1>
                                         :
                                         <h1 className="text-slate-300 text-xs">*NIP Kepala Perangkat Daerah Harus Terisi</h1>
@@ -682,12 +716,12 @@ export const FormEditMasterOpd = () => {
                     <div className="flex flex-col py-3">
                         <label
                             className="uppercase text-xs font-bold text-gray-700 my-2"
-                            htmlFor="pangkat_kepala"
+                            htmlFor="pangkat_kepala_perangkat_daerah"
                         >
                             Pangkat Kepala Perangkat Daerah :
                         </label>
                         <Controller
-                            name="pangkat_kepala"
+                            name="pangkat_kepala_perangkat_daerah"
                             control={control}
                             rules={{ required: "Pangkat Kepala Perangkat Daerah harus terisi" }}
                             render={({ field }) => (
@@ -695,7 +729,7 @@ export const FormEditMasterOpd = () => {
                                     <input
                                         {...field}
                                         className="border px-4 py-2 rounded-lg"
-                                        id="pangkat_kepala"
+                                        id="pangkat_kepala_perangkat_daerah"
                                         type="text"
                                         placeholder="masukkan Pangkat Kepala Perangkat Daerah"
                                         value={field.value || PangkatKepalaOpd}
@@ -704,9 +738,9 @@ export const FormEditMasterOpd = () => {
                                             setPangkatKepalaOpd(e.target.value);
                                         }}
                                     />
-                                    {errors.pangkat_kepala ?
+                                    {errors.pangkat_kepala_perangkat_daerah ?
                                         <h1 className="text-red-500">
-                                        {errors.pangkat_kepala.message}
+                                        {errors.pangkat_kepala_perangkat_daerah.message}
                                         </h1>
                                         :
                                         <h1 className="text-slate-300 text-xs">*Pangkat Kepala Perangkat Daerah Harus Terisi</h1>
@@ -720,7 +754,7 @@ export const FormEditMasterOpd = () => {
                             className="uppercase text-xs font-bold text-gray-700 my-2"
                             htmlFor="id_lembaga"
                         >
-                            Lembaga:
+                            Kode Lembaga:
                         </label>
                         <Controller
                             name="id_lembaga"
