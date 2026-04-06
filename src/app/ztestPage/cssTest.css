@@ -1,0 +1,20 @@
+/* styles/RiskTable.module.css */
+
+.riskTable {
+  width: 100%;
+  border-collapse: collapse; /* Collapses borders between cells */
+  font-family: sans-serif; /* Example font */
+}
+
+.riskTable th,
+.riskTable td {
+  border: 1px solid #000; /* Black borders for cells */
+  padding: 8px; /* Padding inside cells */
+  text-align: left; /* Align text to the left */
+  vertical-align: top; /* Align content to the top for cells spanning rows */
+}
+
+.riskTable thead th {
+  background-color: #f2f2f2; /* Light gray background for header */
+  font-weight: bold;
+}
