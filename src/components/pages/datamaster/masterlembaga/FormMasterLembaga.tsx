@@ -12,10 +12,10 @@ interface FormValue {
     id: string;
     nama_lembaga: string;
     kode_lembaga: string;
-    nama_kepala_pemda: string;
-    nip_kepala_pemda: string;
-    jabatan_kepala_pemda: string;
-    id_lembaga: number;
+    jabatan_kepala_lembaga?: string;
+    nama_kepala_lembaga?: string;
+    nip_kepala_lembaga?: string;
+    id_lembaga?: number;
 }
 
 export const FormMasterLembaga = () => {
@@ -27,27 +27,27 @@ export const FormMasterLembaga = () => {
     } = useForm<FormValue>();
     const [NamaLembaga, setNamaLembaga] = useState<string>('');
     const [KodeLembaga, setKodeLembaga] = useState<string>('');
+    const [JabatanKepalaLembaga, setJabatanKepalaLembaga] = useState<string>('');
+    const [NamaKepalaLembaga, setNamaKepalaLembaga] = useState<string>('');
+    const [NIPKepalaLembaga, setNIPKepalaLembaga] = useState<string>('');
     const router = useRouter();
     const token = getToken();
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const formData = {
-            //key : value
             nama_lembaga: data.nama_lembaga,
             kode_lembaga: data.kode_lembaga,
-            nama_kepala_pemda: data.nama_kepala_pemda,
-            nip_kepala_pemda: data.nip_kepala_pemda,
-            jabatan_kepala_pemda: data.jabatan_kepala_pemda
+            jabatan_kepala_lembaga: data.jabatan_kepala_lembaga,
+            nama_kepala_lembaga: data.nama_kepala_lembaga,
+            nip_kepala_lembaga: data.nip_kepala_lembaga,
         };
-        // console.log(formData);
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = `${token}`;
         try {
-            const response = await fetch(`${API_URL}/lembaga/create`, {
+            const response = await fetch(`${API_URL}/lembagas`, {
                 method: "POST",
-                headers: {
-                    Authorization: `${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify(formData),
             });
             if (response.ok) {
@@ -141,6 +141,114 @@ export const FormMasterLembaga = () => {
                             )}
                         />
                     </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="jabatan_kepala_lembaga"
+                        >
+                            Jabatan Kepala Lembaga :
+                        </label>
+                        <Controller
+                            name="jabatan_kepala_lembaga"
+                            control={control}
+                            rules={{ required: "Jabatan Kepala Lembaga harus terisi" }}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="jabatan_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan jabatan kepala lembaga"
+                                        value={field.value || JabatanKepalaLembaga}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                            setKodeLembaga(e.target.value);
+                                        }}
+                                    />
+                                    {errors.jabatan_kepala_lembaga ?
+                                        <h1 className="text-red-500">
+                                            {errors.jabatan_kepala_lembaga.message}
+                                        </h1>
+                                        :
+                                        <h1 className="text-slate-300 text-xs">*Jabatan Kepala Lembaga Harus Terisi</h1>
+                                    }
+                                </>
+                            )}
+                        />
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="nama_kepala_lembaga"
+                        >
+                            Nama Kepala Lembaga :
+                        </label>
+                        <Controller
+                            name="nama_kepala_lembaga"
+                            control={control}
+                            rules={{ required: "Nama Kepala Lembaga harus terisi" }}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="nama_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan nama kepala lembaga"
+                                        value={field.value || NamaKepalaLembaga}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                            setKodeLembaga(e.target.value);
+                                        }}
+                                    />
+                                    {errors.nama_kepala_lembaga ?
+                                        <h1 className="text-red-500">
+                                            {errors.nama_kepala_lembaga.message}
+                                        </h1>
+                                        :
+                                        <h1 className="text-slate-300 text-xs">*Nama Kepala Lembaga Harus Terisi</h1>
+                                    }
+                                </>
+                            )}
+                        />
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="nip_kepala_lembaga"
+                        >
+                            NIP Kepala Lembaga :
+                        </label>
+                        <Controller
+                            name="nip_kepala_lembaga"
+                            control={control}
+                            rules={{ required: "NIP Kepala Lembaga harus terisi" }}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="nip_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan nip kepala lembaga"
+                                        value={field.value || NIPKepalaLembaga}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                            setKodeLembaga(e.target.value);
+                                        }}
+                                    />
+                                    {errors.nip_kepala_lembaga ?
+                                        <h1 className="text-red-500">
+                                            {errors.nip_kepala_lembaga.message}
+                                        </h1>
+                                        :
+                                        <h1 className="text-slate-300 text-xs">*NIP Kepala Lembaga Harus Terisi</h1>
+                                    }
+                                </>
+                            )}
+                        />
+                    </div>
 
                     <ButtonGreen
                         type="submit"
@@ -166,9 +274,9 @@ export const FormEditMasterLembaga = () => {
     } = useForm<FormValue>();
     const [NamaLembaga, setNamaLembaga] = useState<string>('');
     const [KodeLembaga, setKodeLembaga] = useState<string>('');
-    const [NamaKepalaPemda, setNamaKepalaPemda] = useState<string>('');
-    const [NipKepalaPemda, setNipKepalaPemda] = useState<string>('');
-    const [JabatanKepalaPemda, setJabatanKepalaPemda] = useState<string>('');
+    const [JabatanKepalaLembaga, setJabatanKepalaLembaga] = useState<string>('');
+    const [NamaKepalaLembaga, setNamaKepalaLembaga] = useState<string>('');
+    const [NipKepalaLembaga, setNipKepalaLembaga] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean | null>(null);
     const [idNull, setIdNull] = useState<boolean | null>(null);
@@ -181,7 +289,7 @@ export const FormEditMasterLembaga = () => {
         const fetchLembagaId = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`${API_URL}/lembaga/detail/${id}`, {
+                const response = await fetch(`${API_URL}/lembagas/${id}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
@@ -191,10 +299,10 @@ export const FormEditMasterLembaga = () => {
                     throw new Error('terdapat kesalahan di koneksi backend');
                 }
                 const result = await response.json();
-                if (result.code == 404) {
+                const data = Array.isArray(result) ? result[0] : (result?.data ?? result);
+                if (!data || result.code === 404) {
                     setIdNull(true);
                 } else {
-                    const data = result.data;
                     if (data.nama_lembaga) {
                         setNamaLembaga(data.nama_lembaga);
                         reset((prev) => ({ ...prev, nama_lembaga: data.nama_lembaga }))
@@ -203,17 +311,17 @@ export const FormEditMasterLembaga = () => {
                         setKodeLembaga(data.kode_lembaga);
                         reset((prev) => ({ ...prev, kode_lembaga: data.kode_lembaga }))
                     }
-                    if (data.nama_kepala_pemda) {
-                        setNamaKepalaPemda(data.nama_kepala_pemda);
-                        reset((prev) => ({ ...prev, nama_kepala_pemda: data.nama_kepala_pemda }))
+                    if (data.jabatan_kepala_lembaga) {
+                        setJabatanKepalaLembaga(data.jabatan_kepala_lembaga);
+                        reset((prev) => ({ ...prev, jabatan_kepala_lembaga: data.jabatan_kepala_lembaga }))
                     }
-                    if (data.nip_kepala_pemda) {
-                        setNipKepalaPemda(data.nip_kepala_pemda);
-                        reset((prev) => ({ ...prev, nip_kepala_pemda: data.nip_kepala_pemda }))
+                    if (data.nama_kepala_lembaga) {
+                        setNamaKepalaLembaga(data.nama_kepala_lembaga);
+                        reset((prev) => ({ ...prev, nama_kepala_lembaga: data.nama_kepala_lembaga }))
                     }
-                    if (data.jabatan_kepala_pemda) {
-                        setJabatanKepalaPemda(data.jabatan_kepala_pemda);
-                        reset((prev) => ({ ...prev, jabatan_kepala_pemda: data.jabatan_kepala_pemda }))
+                    if (data.nip_kepala_lembaga) {
+                        setNipKepalaLembaga(data.nip_kepala_lembaga);
+                        reset((prev) => ({ ...prev, nip_kepala_lembaga: data.nip_kepala_lembaga }))
                     }
                 }
             } catch (err) {
@@ -228,16 +336,15 @@ export const FormEditMasterLembaga = () => {
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const formData = {
-            //key : value
+            id: Number(id),
             nama_lembaga: data.nama_lembaga,
             kode_lembaga: data.kode_lembaga,
-            nama_kepala_pemda: data.nama_kepala_pemda,
-            nip_kepala_pemda: data.nip_kepala_pemda,
-            jabatan_kepala_pemda: data.jabatan_kepala_pemda,
+            jabatan_kepala_lembaga: data.jabatan_kepala_lembaga,
+            nama_kepala_lembaga: data.nama_kepala_lembaga,
+            nip_kepala_lembaga: data.nip_kepala_lembaga,
         };
-        //   console.log(formData);
         try {
-            const response = await fetch(`${API_URL}/lembaga/update/${id}`, {
+            const response = await fetch(`${API_URL}/lembagas/${id}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `${token}`,
@@ -361,100 +468,187 @@ export const FormEditMasterLembaga = () => {
                         <div className="flex flex-col py-3">
                             <label
                                 className="uppercase text-xs font-bold text-gray-700 my-2"
-                                htmlFor="jabatan_kepala_pemda"
-                            >
-                                Jabatan Kepala Pemda :
-                            </label>
-                            <Controller
-                                name="jabatan_kepala_pemda"
-                                control={control}
-                                render={({ field }) => (
-                                    <>
-                                        <input
-                                            {...field}
-                                            className="border px-4 py-2 rounded-lg"
-                                            id="jabatan_kepala_pemda"
-                                            type="text"
-                                            placeholder="masukkan jabatan kepala pemda"
-                                            value={field.value || JabatanKepalaPemda}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                                setJabatanKepalaPemda(e.target.value);
-                                            }}
-                                        />
-                                        {errors.jabatan_kepala_pemda &&
+                            htmlFor="jabatan_kepala_lembaga"
+                        >
+                            Jabatan Kepala Pemda :
+                        </label>
+                        <Controller
+                            name="jabatan_kepala_lembaga"
+                            control={control}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="jabatan_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan jabatan kepala pemda"
+                                        value={field.value || JabatanKepalaLembaga}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                            setJabatanKepalaLembaga(e.target.value);
+                                        }}
+                                    />
+                                        {errors.jabatan_kepala_lembaga &&
                                             <h1 className="text-red-500">
-                                                {errors.jabatan_kepala_pemda.message}
+                                                {errors.jabatan_kepala_lembaga.message}
                                             </h1>
                                         }
-                                    </>
-                                )}
-                            />
-                        </div>
-                        <div className="flex flex-col py-3">
-                            <label
-                                className="uppercase text-xs font-bold text-gray-700 my-2"
-                                htmlFor="nama_kepala_pemda"
-                            >
-                                Nama Kepala Pemda :
-                            </label>
-                            <Controller
-                                name="nama_kepala_pemda"
-                                control={control}
-                                render={({ field }) => (
-                                    <>
-                                        <input
-                                            {...field}
-                                            className="border px-4 py-2 rounded-lg"
-                                            id="nama_kepala_pemda"
-                                            type="text"
-                                            placeholder="masukkan nama kepala pemda"
-                                            value={field.value || NamaKepalaPemda}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                                setNamaKepalaPemda(e.target.value);
-                                            }}
-                                        />
-                                        {errors.nama_kepala_pemda &&
+                                </>
+                            )}
+                        />
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="jabatan_kepala_lembaga"
+                        >
+                            Jabatan Kepala Pemda :
+                        </label>
+                        <Controller
+                            name="jabatan_kepala_lembaga"
+                            control={control}
+                            rules={{ required: "Jabatan Kepala Lembaga harus terisi" }}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                    className="border px-4 py-2 rounded-lg"
+                                        id="jabatan_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan jabatan kepala pemda"
+                                    />
+                                    {errors.jabatan_kepala_lembaga &&
+                                        <h1 className="text-red-500">
+                                            {errors.jabatan_kepala_lembaga.message}
+                                        </h1>
+                                    }
+                                </>
+                            )}
+                        />
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="nama_kepala_lembaga"
+                        >
+                            Nama Kepala Pemda :
+                        </label>
+                        <Controller
+                            name="nama_kepala_lembaga"
+                            control={control}
+                            rules={{ required: "Nama Kepala Lembaga harus terisi" }}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="nama_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan nama kepala pemda"
+                                    />
+                                    {errors.nama_kepala_lembaga &&
+                                        <h1 className="text-red-500">
+                                            {errors.nama_kepala_lembaga.message}
+                                        </h1>
+                                    }
+                                </>
+                            )}
+                        />
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="nip_kepala_lembaga"
+                        >
+                            NIP Kepala Pemda :
+                        </label>
+                        <Controller
+                            name="nip_kepala_lembaga"
+                            control={control}
+                            rules={{ required: "NIP Kepala Lembaga harus terisi" }}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="nip_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan nip kepala pemda"
+                                    />
+                                    {errors.nip_kepala_lembaga &&
+                                        <h1 className="text-red-500">
+                                            {errors.nip_kepala_lembaga.message}
+                                        </h1>
+                                    }
+                                </>
+                            )}
+                        />
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="nama_kepala_lembaga"
+                        >
+                            Nama Kepala Pemda :
+                        </label>
+                        <Controller
+                            name="nama_kepala_lembaga"
+                            control={control}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="nama_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan nama kepala pemda"
+                                        value={field.value || NamaKepalaLembaga}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                            setNamaKepalaLembaga(e.target.value);
+                                        }}
+                                    />
+                                        {errors.nama_kepala_lembaga &&
                                             <h1 className="text-red-500">
-                                                {errors.nama_kepala_pemda.message}
+                                                {errors.nama_kepala_lembaga.message}
                                             </h1>
                                         }
-                                    </>
-                                )}
-                            />
-                        </div>
-                        <div className="flex flex-col py-3">
-                            <label
-                                className="uppercase text-xs font-bold text-gray-700 my-2"
-                                htmlFor="nip_kepala_pemda"
-                            >
-                                NIP Kepala Pemda :
-                            </label>
-                            <Controller
-                                name="nip_kepala_pemda"
-                                control={control}
-                                render={({ field }) => (
-                                    <>
-                                        <input
-                                            {...field}
-                                            className="border px-4 py-2 rounded-lg"
-                                            id="nip_kepala_pemda"
-                                            type="text"
-                                            placeholder="masukkan nip kepala pemda"
-                                            value={field.value || NipKepalaPemda}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                                setNipKepalaPemda(e.target.value);
-                                            }}
-                                        />
-                                        {errors.nip_kepala_pemda &&
+                                </>
+                            )}
+                        />
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="nip_kepala_lembaga"
+                        >
+                            NIP Kepala Pemda :
+                        </label>
+                        <Controller
+                            name="nip_kepala_lembaga"
+                            control={control}
+                            render={({ field }) => (
+                                <>
+                                    <input
+                                        {...field}
+                                        className="border px-4 py-2 rounded-lg"
+                                        id="nip_kepala_lembaga"
+                                        type="text"
+                                        placeholder="masukkan nip kepala pemda"
+                                        value={field.value || NipKepalaLembaga}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                            setNipKepalaLembaga(e.target.value);
+                                        }}
+                                    />
+                                        {errors.nip_kepala_lembaga &&
                                             <h1 className="text-red-500">
-                                                {errors.nip_kepala_pemda.message}
+                                                {errors.nip_kepala_lembaga.message}
                                             </h1>
                                         }
-                                    </>
-                                )}
+                                </>
+                            )}
                             />
                         </div>
                         <ButtonGreen

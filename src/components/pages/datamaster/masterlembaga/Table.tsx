@@ -10,9 +10,9 @@ interface lembaga {
     id: string;
     nama_lembaga: string;
     kode_lembaga: string;
-    nama_kepala_pemda: string;
-    nip_kepala_pemda: string;
-    jabatan_kepala_pemda: string;
+    nama_kepala_lembaga?: string;
+    nip_kepala_lembaga?: string;
+    jabatan_kepala_lembaga?: string;
 }
 
 const Table = () => {
@@ -28,28 +28,25 @@ const Table = () => {
         const fetchLembaga = async () => {
             setLoading(true)
             try {
-                const response = await fetch(`${API_URL}/lembaga/findall`, {
+                const response = await fetch(`${API_URL}/lembagas`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
                 const result = await response.json();
-                const data = result.data;
-                if (data.length == 0) {
+                const data = Array.isArray(result) ? result : result?.data ?? [];
+                if (!response.ok || result.code === 401) {
+                    setError(true);
+                    setLembaga([]);
+                } else if (data.length === 0) {
                     setDataNull(true);
                     setLembaga([]);
-                } else if (data.code == 500) {
-                    setError(true);
-                    setLembaga([]);
-                } else if (result.code === 401) {
-                    setError(true);
                 } else {
                     setError(false);
                     setDataNull(false);
                     setLembaga(data);
                 }
-                setLembaga(data);
             } catch (err) {
                 setError(true);
                 console.error(err)
@@ -60,25 +57,27 @@ const Table = () => {
         fetchLembaga();
     }, [token]);
 
-    // const hapusLembaga = async (id: any) => {
-    //     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    //     try {
-    //         const response = await fetch(`${API_URL}/lembaga/delete/${id}`, {
-    //             method: "DELETE",
-    //             headers: {
-    //                 // Authorization: `${token}`,
-    //                 'Content-Type': 'application/json',
-    //             },
-    //         })
-    //         if (!response.ok) {
-    //             alert("cant fetch data")
-    //         }
-    //         setLembaga(Lembaga.filter((data) => (data.id !== id)))
-    //         AlertNotification("Berhasil", "Data lembaga Berhasil Dihapus", "success", 1000);
-    //     } catch (err) {
-    //         AlertNotification("Gagal", "cek koneksi internet atau database server", "error", 2000);
-    //     }
-    // };
+    const hapusLembaga = async (id: string) => {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        try {
+            const response = await fetch(`${API_URL}/lembagas/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (!response.ok) {
+                throw new Error("cant fetch data");
+            }
+            const filtered = Lembaga.filter((data) => data.id !== id);
+            setLembaga(filtered);
+            setDataNull(filtered.length === 0);
+            AlertNotification("Berhasil", "Data lembaga Berhasil Dihapus", "success", 1000);
+        } catch (err) {
+            AlertNotification("Gagal", "cek koneksi internet atau database server", "error", 2000);
+        }
+    };
 
     if (Loading) {
         return (
@@ -124,13 +123,13 @@ const Table = () => {
                                     <td className="border-r border-b px-6 py-4">{data.id ? data.id : "-"}</td>
                                     <td className="border-r border-b px-6 py-4">{data.nama_lembaga ? data.nama_lembaga : "-"}</td>
                                     <td className="border-r border-b px-6 py-4 text-center">{data.kode_lembaga ? data.kode_lembaga : "-"}</td>
-                                    <td className="border-r border-b px-6 py-4 text-center">{data.jabatan_kepala_pemda ? data.jabatan_kepala_pemda : "-"}</td>
-                                    <td className="border-r border-b px-6 py-4 text-center">{data.nama_kepala_pemda ? data.nama_kepala_pemda : "-"}</td>
-                                    <td className="border-r border-b px-6 py-4 text-center">{data.nip_kepala_pemda ? data.nip_kepala_pemda : "-"}</td>
+                                    <td className="border-r border-b px-6 py-4 text-center">{data.jabatan_kepala_lembaga ? data.jabatan_kepala_lembaga : "-"}</td>
+                                    <td className="border-r border-b px-6 py-4 text-center">{data.nama_kepala_lembaga ? data.nama_kepala_lembaga : "-"}</td>
+                                    <td className="border-r border-b px-6 py-4 text-center">{data.nip_kepala_lembaga ? data.nip_kepala_lembaga : "-"}</td>
                                     <td className="border-r border-b px-6 py-4">
                                         <div className="flex flex-col jutify-center items-center gap-2">
                                             <ButtonGreen className="w-full" halaman_url={`/DataMaster/masterlembaga/${data.id}`}>Edit</ButtonGreen>
-                                            {/* <ButtonRed
+                                            <ButtonRed
                                                 className="w-full"
                                                 onClick={() => {
                                                     AlertQuestion("Hapus?", "Hapus Lembaga yang dipilih?", "question", "Hapus", "Batal").then((result) => {
@@ -141,7 +140,7 @@ const Table = () => {
                                                 }}
                                             >
                                                 Hapus
-                                            </ButtonRed> */}
+                                            </ButtonRed>
                                         </div>
                                     </td>
                                 </tr>
