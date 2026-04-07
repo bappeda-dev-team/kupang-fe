@@ -16,7 +16,7 @@ interface User {
     nama_pegawai: string;
     id_jabatan: string;
     nama_jabatan: string;
-    pegawai_id: string;
+    pegawai_id?: string;
     is_active: boolean;
     role: roles[];
 }
@@ -36,6 +36,8 @@ const Table = () => {
     const [FetchTrigger, setFetchTrigger] = useState<boolean>(false);
     const [ModalJabatanOpen, setModalJabatanOpen] = useState<boolean>(false);
     const [DataModal, setDataModal] = useState<User | null>(null);
+    const [JenisJabatan, setJenisJabatan] = useState<"tambah" | "edit">("tambah");
+    const [JabatanId, setJabatanId] = useState<number | undefined>(undefined);
 
     const [SelectedOpd, setSelectedOpd] = useState<any>(null);
     const token = getToken();
@@ -45,13 +47,17 @@ const Table = () => {
     
     const [SearchParams, setSearchParams] = useState<string>("");
 
-    const handleModalJabatan = (Data: User | null) => {
+    const handleModalJabatan = (Data: User | null, jenis: "tambah" | "edit" = "tambah", jabatanId?: number) => {
         if (ModalJabatanOpen) {
             setModalJabatanOpen(false);
             setDataModal(Data);
+            setJenisJabatan(jenis);
+            setJabatanId(jabatanId);
         } else {
             setModalJabatanOpen(true);
             setDataModal(Data);
+            setJenisJabatan(jenis);
+            setJabatanId(jabatanId);
         }
     }
 
@@ -216,7 +222,13 @@ const Table = () => {
                                             <ButtonGreen className="w-full" halaman_url={`/useropd/${data.id}`}>Edit</ButtonGreen>
                                             <ButtonBlack
                                                 className="w-full"
-                                                onClick={() => handleModalJabatan(data)}
+                                                onClick={() => {
+                                                    if (data.id_jabatan) {
+                                                        handleModalJabatan(data, "edit", parseInt(data.id_jabatan));
+                                                    } else {
+                                                        handleModalJabatan(data, "tambah");
+                                                    }
+                                                }}
                                             >
                                                 Jabatan
                                             </ButtonBlack>
@@ -248,6 +260,8 @@ const Table = () => {
                     Data={DataModal}
                     kode_opd={kode_opd}
                     nama_opd={nama_opd}
+                    jenis={JenisJabatan}
+                    jabatanId={JabatanId}
                 />
             }
         </>

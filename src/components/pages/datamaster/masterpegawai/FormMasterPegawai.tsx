@@ -43,7 +43,7 @@ export const FormMasterPegawai = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+            const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -67,35 +67,35 @@ export const FormMasterPegawai = () => {
     };
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const formData = {
-            //key : value
-            nama_pegawai: `${data.nama_pegawai} ${Plt ? '(PLT)' : ''} ${Pbt ? "(PBT)" : ""}`,
-            nip: `${Plt ? `${data.nip}_plt` : Pbt ? `${data.nip}_pbt` : data.nip}`,
+        const payload = {
+            jenis_pegawai: Plt ? "PLT" : Pbt ? "PBT" : "",
             kode_opd: data.kode_opd?.value,
+            nama: data.nama_pegawai,
+            nama_opd: data.kode_opd?.label,
+            nip: data.nip,
         };
-        // console.log(formData);
-          try{
-              setProses(true);
-              const response = await fetch(`${API_URL}/pegawai/create`, {
-                  method: "POST",
-                  headers: {
+        try {
+            setProses(true);
+            const response = await fetch(`${API_URL}/pegawais`, {
+                method: "POST",
+                headers: {
                     Authorization: `${token}`,
                     'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(formData),
-              });
-              const result = await response.json();
-              if(result.code === 200 || result.code === 201){
-                  AlertNotification("Berhasil", "Berhasil menambahkan data master pegawai", "success", 1000);
-                  router.push("/DataMaster/masterpegawai");
-              } else {
-                  AlertNotification("Gagal", `${result.data}`, "error", 2000);
-              }
-          } catch(err){
-              AlertNotification("Gagal", "cek koneksi internet/terdapat kesalahan pada database server", "error", 2000);
-          } finally {
+                },
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json();
+            if (result.code === 200 || result.code === 201 || result.id) {
+                AlertNotification("Berhasil", "Berhasil menambahkan data master pegawai", "success", 1000);
+                router.push("/DataMaster/masterpegawai");
+            } else {
+                AlertNotification("Gagal", `${result.data}`, "error", 2000);
+            }
+        } catch (err) {
+            AlertNotification("Gagal", "cek koneksi internet/terdapat kesalahan pada database server", "error", 2000);
+        } finally {
             setProses(false);
-          }
+        }
     };
 
 
@@ -300,6 +300,8 @@ export const FormEditMasterPegawai = () => {
     const [Nama, setNama] = useState<string>('');
     const [Nip, setNip] = useState<string>('');
     const [KodeOpd, setKodeOpd] = useState<OptionTypeString | null>(null);
+    const [Plt, setPlt] = useState<boolean>(false);
+    const [Pbt, setPbt] = useState<boolean>(false);
     const { id } = useParams();
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
@@ -329,9 +331,9 @@ export const FormEditMasterPegawai = () => {
                     setIdNull(true);
                 } else {
                     const data = result.data;
-                    if (data.nama_pegawai) {
-                        setNama(data.nama_pegawai);
-                        reset((prev) => ({ ...prev, nama_pegawai: data.nama_pegawai }))
+                    if (data.nama) {
+                        setNama(data.nama);
+                        reset((prev) => ({ ...prev, nama_pegawai: data.nama }))
                     }
                     if (data.nip) {
                         setNip(data.nip);
@@ -344,6 +346,16 @@ export const FormEditMasterPegawai = () => {
                         }
                         setKodeOpd(opd);
                         reset((prev) => ({ ...prev, kode_opd: opd }))
+                    }
+                    if (data.jenis_pegawai === "PLT") {
+                        setPlt(true);
+                        setPbt(false);
+                    } else if (data.jenis_pegawai === "PBT") {
+                        setPlt(false);
+                        setPbt(true);
+                    } else {
+                        setPlt(false);
+                        setPbt(false);
                     }
                 }
             } catch (err) {
@@ -359,7 +371,7 @@ export const FormEditMasterPegawai = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+            const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -384,17 +396,18 @@ export const FormEditMasterPegawai = () => {
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        const jenisPegawai = Plt ? "PLT" : Pbt ? "PBT" : "";
         const formData = {
-            //key : value
-            nama_pegawai: data.nama_pegawai,
-            nip: data.nip,
+            id: Number(id),
+            jenis_pegawai: jenisPegawai,
             kode_opd: data.kode_opd?.value,
-            //   role : data.role, 
+            nama: data.nama_pegawai,
+            nama_opd: data.kode_opd?.label,
+            nip: data.nip,
         };
-        //   console.log(formData);
         try {
             setProses(true);
-            const response = await fetch(`${API_URL}/pegawai/update/${id}`, {
+            const response = await fetch(`${API_URL}/pegawais/${id}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `${token}`,
@@ -483,10 +496,56 @@ export const FormEditMasterPegawai = () => {
                 </div>
                 <div className="flex flex-col py-3">
                     <label
-                        className="uppercase text-xs font-bold text-gray-700 my-2"
+                        className="flex flex-col flex-wrap gap-2 uppercase text-xs font-bold text-gray-700 my-2"
                         htmlFor="nip"
                     >
                         NIP :
+                        <div className="flex items-center gap-2">
+                            {Plt ?
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setPlt(false)
+                                        setPbt(false)
+                                    }}
+                                    className="w-[20px] h-[20px] bg-emerald-500 rounded-full text-white p-1 flex justify-center items-center"
+                                >
+                                    <TbCheck />
+                                </button>
+                                :
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setPlt(true)
+                                        setPbt(false)
+                                    }}
+                                    className="w-[20px] h-[20px] border border-black rounded-full"
+                                ></button>
+                            }
+                            <p className="text-lg">PLT</p>
+                            {Pbt ?
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setPbt(false)
+                                        setPlt(false)
+                                    }}
+                                    className="w-[20px] h-[20px] bg-emerald-500 rounded-full text-white p-1 flex justify-center items-center"
+                                >
+                                    <TbCheck />
+                                </button>
+                                :
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setPbt(true)
+                                        setPlt(false)
+                                    }}
+                                    className="w-[20px] h-[20px] border border-black rounded-full"
+                                ></button>
+                            }
+                            <p className="text-lg">PBT</p>
+                        </div>
                     </label>
                     <Controller
                         name="nip"
@@ -512,7 +571,7 @@ export const FormEditMasterPegawai = () => {
                                         {errors.nip.message}
                                     </h1>
                                     :
-                                    <h1 className="text-slate-300 text-xs">*NIP Harus Terisi</h1>
+                                    <h1 className="text-slate-300 text-xs">*NIP Harus Terisi, centang PLT/PBT jika sesuai</h1>
                                 }
                             </>
                         )}

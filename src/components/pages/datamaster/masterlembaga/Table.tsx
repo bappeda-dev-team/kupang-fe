@@ -18,7 +18,7 @@ interface lembaga {
 const Table = () => {
 
     const [Lembaga, setLembaga] = useState<lembaga[]>([]);
-    const [Error, setError] = useState<boolean | null>(null);
+    const [isError, setIsError] = useState<boolean | null>(null);
     const [Loading, setLoading] = useState<boolean | null>(null);
     const [DataNull, setDataNull] = useState<boolean | null>(null);
     const token = getToken();
@@ -37,18 +37,18 @@ const Table = () => {
                 const result = await response.json();
                 const data = Array.isArray(result) ? result : result?.data ?? [];
                 if (!response.ok || result.code === 401) {
-                    setError(true);
+                    setIsError(true);
                     setLembaga([]);
                 } else if (data.length === 0) {
                     setDataNull(true);
                     setLembaga([]);
                 } else {
-                    setError(false);
+                    setIsError(false);
                     setDataNull(false);
                     setLembaga(data);
                 }
             } catch (err) {
-                setError(true);
+                setIsError(true);
                 console.error(err)
             } finally {
                 setLoading(false);
@@ -85,7 +85,7 @@ const Table = () => {
                 <LoadingClip className="mx-5 py-5" />
             </div>
         );
-    } else if (Error) {
+    } else if (isError) {
         return (
             <div className="border p-5 rounded-xl shadow-xl">
                 <h1 className="text-red-500 mx-5 py-5">Periksa koneksi internet atau database server</h1>

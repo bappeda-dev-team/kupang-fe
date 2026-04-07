@@ -16,13 +16,15 @@ interface OptionTypeString {
     label: string;
 }
 interface pegawai {
-    id: string;
-    nama_pegawai: string;
-    nip: string;
+    id: number;
+    jabatan_id?: number | null;
+    jenis_pegawai?: string;
     kode_opd: string;
+    nama: string;
+    nama_jabatan?: string;
     nama_opd: string;
-    id_jabatan: string;
-    nama_jabatan: string;
+    nip: string;
+    nama_pegawai: string;
 }
 
 const Table = () => {
@@ -46,6 +48,8 @@ const Table = () => {
     const [NamaOpd, setNamaOpd] = useState<string>("");
     const [KodeOpd, setKodeOpd] = useState<string>("");
     const [FetchTrigger, setFetchTrigger] = useState<boolean>(false);
+    const [JenisJabatan, setJenisJabatan] = useState<"tambah" | "edit">("tambah");
+    const [JabatanId, setJabatanId] = useState<number | undefined>(undefined);
 
     const handleModal = (jenis: "tambah" | "edit", Data: pegawai | null, nama_opd: string, kode_opd: string) => {
         if (ModalOpen) {
@@ -62,13 +66,17 @@ const Table = () => {
             setKodeOpd(kode_opd);
         }
     }
-    const handleModalJabatan = (Data: pegawai | null) => {
+    const handleModalJabatan = (Data: pegawai | null, jenis: "tambah" | "edit" = "tambah", jabatanId?: number) => {
         if(ModalJabatanOpen){
             setModalJabatanOpen(false);
             setDataModal(Data);
+            setJenisJabatan(jenis);
+            setJabatanId(jabatanId);
         } else {
             setModalJabatanOpen(true);
             setDataModal(Data);
+            setJenisJabatan(jenis);
+            setJabatanId(jabatanId);
         }
     }
 
@@ -94,14 +102,28 @@ const Table = () => {
         const fetchPegawai = async () => {
             setLoading(true)
             try {
-                const response = await fetch(`${API_URL}/pegawai/findall?kode_opd=${Opd?.value}`, {
+                const response = await fetch(`${API_URL}/pegawais/opd/${Opd?.value}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
                 const result = await response.json();
-                const data = result.data;
+                const rawData = Array.isArray(result) ? result : result.data ?? result;
+                const data: pegawai[] | null = rawData
+                    ? rawData.map((item: any) => ({
+                        id: Number(item.id ?? 0),
+                        jabatan_id: item.jabatan_id ?? null,
+                        jenis_pegawai: item.jenis_pegawai ?? "",
+                        kode_opd: item.kode_opd ?? "",
+                        nama: item.nama ?? "",
+                        nama_pegawai: item.nama ?? "",
+                        nama_jabatan: item.nama_jabatan,
+                        nama_opd: item.nama_opd ?? "",
+                        nip: item.nip ?? "",
+                    }))
+                    : null;
+
                 if (data == null) {
                     setDataNull(true);
                     setPegawai([]);
@@ -112,7 +134,6 @@ const Table = () => {
                     setPegawai(data);
                     setError(false);
                 }
-                setPegawai(data);
             } catch (err) {
                 setError(true);
                 console.error(err)
@@ -129,8 +150,8 @@ const Table = () => {
     const FilteredData = Pegawai?.filter((item: pegawai) => {
         const params = searchQuery.toLowerCase();
         return (
-            item.nama_pegawai.toLowerCase().includes(params) ||
-            item.nip.toLowerCase().includes(params)
+            (item.nama || item.nama_pegawai || "").toLowerCase().includes(params) ||
+            (item.nip || "").toLowerCase().includes(params)
         )
     });
 
@@ -138,7 +159,7 @@ const Table = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+        const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -164,7 +185,7 @@ const Table = () => {
     const hapusPegawai = async (id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try {
-            const response = await fetch(`${API_URL}/pegawai/delete/${id}`, {
+            const response = await fetch(`${API_URL}/pegawais/${id}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `${token}`,
@@ -304,9 +325,9 @@ const Table = () => {
                                 FilteredData.map((data, index) => (
                                     <tr key={data?.id}>
                                         <td className="border-r border-b px-6 py-4">{index + 1}</td>
-                                        <td className="border-r border-b px-6 py-4">{data?.nama_pegawai ? data.nama_pegawai : "-"}</td>
-                                        <td className="border-r border-b px-6 py-4 text-center">{data?.nip ? data.nip : "-"}</td>
-                                        <td className="border-r border-b px-6 py-4 text-center">{data?.nama_jabatan ? data.nama_jabatan : "-"}</td>
+                                         <td className="border-r border-b px-6 py-4">{data?.nama ? data.nama : data?.nama_pegawai ? data.nama_pegawai : "-"}</td>
+                                         <td className="border-r border-b px-6 py-4 text-center">{data?.nip ? data.nip : "-"}</td>
+                                         <td className="border-r border-b px-6 py-4 text-center">{data?.nama_jabatan ? data.nama_jabatan : "-"}</td>
                                         <td className="border-r border-b px-6 py-4">{data?.kode_opd ? data.kode_opd : "-"}</td>
                                         <td className="border-r border-b px-6 py-4">{data?.nama_opd ? data.nama_opd : "-"}</td>
                                         <td className="border-r border-b px-6 py-4">
@@ -319,7 +340,13 @@ const Table = () => {
                                                 </ButtonGreen>
                                                 <ButtonBlack
                                                     className="w-full"
-                                                    onClick={() => handleModalJabatan(data)}
+                                                    onClick={() => {
+                                                        if (data?.jabatan_id) {
+                                                            handleModalJabatan(data, "edit", data.jabatan_id);
+                                                        } else {
+                                                            handleModalJabatan(data, "tambah");
+                                                        }
+                                                    }}
                                                 >
                                                     Jabatan
                                                 </ButtonBlack>
@@ -363,6 +390,8 @@ const Table = () => {
                     Data={DataModal}
                     kode_opd={Opd?.value ?? ""}
                     nama_opd={Opd?.label ?? ""}
+                    jenis={JenisJabatan}
+                    jabatanId={JabatanId}
                 />
             }
         </>

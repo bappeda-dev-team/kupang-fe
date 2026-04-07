@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TbDeviceFloppy, TbX, TbCheck } from "react-icons/tb";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { ButtonSky, ButtonRed } from "@/components/global/Button";
 import { AlertNotification } from "@/components/global/Alert";
 import { LoadingButtonClip } from "@/components/global/Loading";
 import { OptionTypeString } from "@/types";
-import { useBrandingContext } from "@/context/BrandingContext";
 import { getToken } from "@/components/lib/Cookie";
 import Select from "react-select";
 
@@ -21,11 +20,13 @@ interface modal {
     nama_opd: string;
 }
 interface pegawai {
-    id: string;
-    nama_pegawai: string;
+    id: number;
+    nama: string;
+    nama_pegawai?: string;
     nip: string;
     kode_opd: string;
     nama_opd: string;
+    jenis_pegawai?: string;
 }
 export interface FormValue {
     nama_pegawai: string;
@@ -34,11 +35,9 @@ export interface FormValue {
 }
 
 export const ModalMasterPegawai: React.FC<modal> = ({ isOpen, onClose, onSuccess, jenis, Data, kode_opd, nama_opd }) => {
-
-    const { branding } = useBrandingContext();
     const { control, handleSubmit, reset, formState: { errors } } = useForm<FormValue>({
         defaultValues: {
-            nama_pegawai: Data?.nama_pegawai,
+            nama_pegawai: Data?.nama ?? Data?.nama_pegawai,
             nip: Data?.nip,
             kode_opd: {
                 value: kode_opd,
@@ -61,13 +60,42 @@ export const ModalMasterPegawai: React.FC<modal> = ({ isOpen, onClose, onSuccess
     const handleClose = () => {
         onClose();
         reset();
+        setPlt(false);
+        setPbt(false);
     }
+
+    // Prefill form & toggle when editing
+    useEffect(() => {
+        reset({
+            nama_pegawai: Data?.nama ?? Data?.nama_pegawai,
+            nip: Data?.nip,
+            kode_opd: {
+                value: kode_opd,
+                label: nama_opd,
+            }
+        });
+
+        if (Data?.jenis_pegawai === "PLT") {
+            setPlt(true);
+            setPbt(false);
+        } else if (Data?.jenis_pegawai === "PBT") {
+            setPlt(false);
+            setPbt(true);
+        } else {
+            setPlt(false);
+            setPbt(false);
+        }
+
+        if (Data?.nip) {
+            setNip(Data.nip);
+        }
+    }, [Data, kode_opd, nama_opd, reset]);
 
     const fetchOpd = async () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+            const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -91,32 +119,34 @@ export const ModalMasterPegawai: React.FC<modal> = ({ isOpen, onClose, onSuccess
     };
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
-        const formDataTambah = {
-            nama_pegawai: `${data.nama_pegawai} ${Plt ? '(PLT)' : ''} ${Pbt ? "(PBT)" : ""}`,
-            nip: `${Plt ? `${data.nip}_plt` : Pbt ? `${data.nip}_pbt` : data.nip}`,
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        const jenisPegawai = Plt ? "PLT" : Pbt ? "PBT" : "";
+        const bodyTambah = {
+            jenis_pegawai: jenisPegawai,
             kode_opd: data.kode_opd?.value,
-        }
-        const formDataEdit = {
-            //key : value
-            nama_pegawai: data.nama_pegawai,
+            nama: data.nama_pegawai,
+            nama_opd: data.kode_opd?.label,
             nip: data.nip,
+        };
+        const bodyEdit = {
+            id: Data?.id,
+            jenis_pegawai: jenisPegawai,
             kode_opd: data.kode_opd?.value,
+            nama: data.nama_pegawai,
+            nama_opd: data.kode_opd?.label,
+            nip: data.nip,
         };
         const getBody = () => {
-            if (jenis === "tambah") return formDataTambah;
-            if (jenis === "edit") return formDataEdit;
-            return {}; // Default jika jenis tidak sesuai
+            if (jenis === "tambah") return bodyTambah;
+            if (jenis === "edit") return bodyEdit;
+            return {};
         };
-        // console.log(getBody());
-        let url = ''
-        if (jenis === "tambah") {
-            url = 'pegawai/create'
-        } else {
-            url = `pegawai/update/${Data?.id}`
-        }
+        const url = jenis === "tambah"
+            ? `${API_URL}/pegawais`
+            : `${API_URL}/pegawais/${Data?.id}`;
         try {
             setProses(true);
-            const response = await fetch(`${branding?.api_perencanaan}/${url}`, {
+            const response = await fetch(url, {
                 method: jenis === "tambah" ? "POST" : "PUT",
                 headers: {
                     Authorization: `${token}`,
@@ -192,54 +222,52 @@ export const ModalMasterPegawai: React.FC<modal> = ({ isOpen, onClose, onSuccess
                                 htmlFor="nip"
                             >
                                 NIP :
-                                {jenis === "tambah" &&
-                                    <div className="flex items-center gap-2">
-                                        {Plt ?
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setPlt(false)
-                                                    setPbt(false)
-                                                }}
-                                                className="w-[20px] h-[20px] bg-emerald-500 rounded-full text-white p-1 flex justify-center items-center"
-                                            >
-                                                <TbCheck />
-                                            </button>
-                                            :
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setPlt(true)
-                                                    setPbt(false)
-                                                }}
-                                                className="w-[20px] h-[20px] border border-black rounded-full"
-                                            ></button>
-                                        }
-                                        <p className="text-lg">PLT</p>
-                                        {Pbt ?
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setPbt(false)
-                                                    setPlt(false)
-                                                }}
-                                                className="w-[20px] h-[20px] bg-emerald-500 rounded-full text-white p-1 flex justify-center items-center"
-                                            >
-                                                <TbCheck />
-                                            </button>
-                                            :
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setPbt(true)
-                                                    setPlt(false)
-                                                }}
-                                                className="w-[20px] h-[20px] border border-black rounded-full"
-                                            ></button>
-                                        }
-                                        <p className="text-lg">PBT</p>
-                                    </div>
-                                }
+                                <div className="flex items-center gap-2">
+                                    {Plt ?
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPlt(false)
+                                                setPbt(false)
+                                            }}
+                                            className="w-[20px] h-[20px] bg-emerald-500 rounded-full text-white p-1 flex justify-center items-center"
+                                        >
+                                            <TbCheck />
+                                        </button>
+                                        :
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPlt(true)
+                                                setPbt(false)
+                                            }}
+                                            className="w-[20px] h-[20px] border border-black rounded-full"
+                                        ></button>
+                                    }
+                                    <p className="text-lg">PLT</p>
+                                    {Pbt ?
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPbt(false)
+                                                setPlt(false)
+                                            }}
+                                            className="w-[20px] h-[20px] bg-emerald-500 rounded-full text-white p-1 flex justify-center items-center"
+                                        >
+                                            <TbCheck />
+                                        </button>
+                                        :
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPbt(true)
+                                                setPlt(false)
+                                            }}
+                                            className="w-[20px] h-[20px] border border-black rounded-full"
+                                        ></button>
+                                    }
+                                    <p className="text-lg">PBT</p>
+                                </div>
                             </label>
                             <Controller
                                 name="nip"
