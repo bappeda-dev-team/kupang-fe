@@ -6,23 +6,10 @@ import { useState, useEffect } from "react";
 import { LoadingClip } from "@/components/global/Loading";
 import { getToken } from "@/components/lib/Cookie";
 
-interface Lembaga {
-    id: string;
-    nama_lembaga?: string;
-    is_active?: boolean;
-}
-
-// Accommodate both legacy /opd/findall fields and new /opds payload
 interface Opd {
     id: number;
     kode_opd: string;
     nama_opd: string;
-    // legacy fields (may be missing on /opds)
-    nama_kepala_opd?: string;
-    nip_kepala_opd?: string;
-    pangkat_kepala?: string;
-    id_lembaga?: Lembaga;
-    // new fields from /opds
     nama_kepala_perangkat_daerah?: string;
     nip_kepala_perangkat_daerah?: string;
     pangkat_kepala_perangkat_daerah?: string;
@@ -134,10 +121,10 @@ const Table = () => {
                             <td className="border-r border-b px-6 py-4">{index + 1}</td>
                             <td className="border-r border-b px-6 py-4">{data.kode_opd ? data.kode_opd : "-"}</td>
                             <td className="border-r border-b px-6 py-4">{data.nama_opd ? data.nama_opd : "-"}</td>
-                            <td className="border-r border-b px-6 py-4">{data.nama_kepala_opd || data.nama_kepala_perangkat_daerah || "-"}</td>
-                            <td className="border-r border-b px-6 py-4">{data.nip_kepala_opd || data.nip_kepala_perangkat_daerah || "-"}</td>
-                            <td className="border-r border-b px-6 py-4">{data.pangkat_kepala || data.pangkat_kepala_perangkat_daerah || "-"}</td>
-                            <td className="border-r border-b px-6 py-4">{data.id_lembaga?.id || data.kode_lembaga || "Tidak ada lembaga"}</td>
+                            <td className="border-r border-b px-6 py-4">{data.nama_kepala_perangkat_daerah || "-"}</td>
+                            <td className="border-r border-b px-6 py-4">{data.nip_kepala_perangkat_daerah || "-"}</td>
+                            <td className="border-r border-b px-6 py-4">{data.pangkat_kepala_perangkat_daerah || "-"}</td>
+                            <td className="border-r border-b px-6 py-4">{data.kode_lembaga || "Tidak ada lembaga"}</td>
                             <td className="border-r border-b px-6 py-4">
                                 <div className="flex flex-col jutify-center items-center gap-2">
                                     <ButtonGreen className="w-full" halaman_url={`/DataMaster/masteropd/${data.id}`}>Edit</ButtonGreen>
