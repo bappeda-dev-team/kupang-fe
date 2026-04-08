@@ -35,7 +35,7 @@ export const FormRole = () => {
         };
         // console.log(formData);
         try{
-            const response = await fetch(`${API_URL}/role/create`, {
+            const response = await fetch(`${API_URL}/roles`, {
                 method: "POST",
                 headers: {
                   Authorization: `${token}`,
@@ -130,10 +130,10 @@ export const FormEditRole = () => {
 
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const fetchIdUrusan = async() => {
+        const fetchRoleById = async() => {
             setLoading(true);
             try{
-                const response = await fetch(`${API_URL}/role/detail/${id}`, {
+                const response = await fetch(`${API_URL}/roles/${id}`, {
                     headers: {
                       Authorization: `${token}`,
                       'Content-Type': 'application/json',
@@ -146,8 +146,8 @@ export const FormEditRole = () => {
                 if(result.code == 500){
                     setIdNull(true);
                 } else {
-                    const data = result.data;
-                    if(data.role){
+                    const data = result?.data ?? result;
+                    if(data?.role){
                         setRole(data.role);
                         reset((prev) => ({ ...prev, role: data.role }))
                     }
@@ -158,7 +158,7 @@ export const FormEditRole = () => {
                 setLoading(false);
             }
         }
-        fetchIdUrusan();
+        fetchRoleById();
     },[id, reset, token]);
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
@@ -169,7 +169,7 @@ export const FormEditRole = () => {
       };
         //console.log(formData);
         try{
-            const response = await fetch(`${API_URL}/role/update/${id}`, {
+            const response = await fetch(`${API_URL}/roles/${id}`, {
                 method: "PUT",
                 headers: {
                   Authorization: `${token}`,

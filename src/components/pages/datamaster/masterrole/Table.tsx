@@ -6,14 +6,14 @@ import { LoadingClip } from "@/components/global/Loading";
 import { useState, useEffect } from "react";
 import { getToken } from "@/components/lib/Cookie";
 
-interface User {
-    id: string;
+interface Role {
+    id: number;
     role: string;
 }
 
 const Table = () => {
 
-    const [Role, setRole] = useState<User[]>([]);
+    const [Role, setRole] = useState<Role[]>([]);
     const [Error, setError] = useState<boolean | null>(null);
     const [Loading, setLoading] = useState<boolean | null>(null);
     const [DataNull, setDataNull] = useState<boolean | null>(null);
@@ -21,45 +21,46 @@ const Table = () => {
 
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const fetchUrusan = async() => {
+        const fetchRoles = async () => {
             setLoading(true)
             try{
-                const response = await fetch(`${API_URL}/role/findall`, {
+                const response = await fetch(`${API_URL}/roles`, {
                     headers: {
                       Authorization: `${token}`,
                       'Content-Type': 'application/json',
                     },
                 });
-                const result = await response.json();
-                const data = result.data;
-                if(data == null){
+                if (!response.ok) {
+                    setError(true);
+                    setRole([]);
                     setDataNull(true);
-                    setRole([]);
-                } else if(data.code == 500){
-                    setError(true);
-                    setRole([]);
-                } else if(result.code === 401){
-                    setError(true);
-                } else {
-                    setError(false);
-                    setDataNull(false);
-                    setRole(data);
+                    return;
                 }
+                const result = await response.json();
+                const data = Array.isArray(result)
+                    ? result
+                    : Array.isArray(result?.data)
+                        ? result.data
+                        : [];
                 setRole(data);
+                setDataNull(data.length === 0);
+                setError(false);
             } catch(err){
                 setError(true);
+                setRole([]);
+                setDataNull(true);
                 console.error(err)
             } finally{
                 setLoading(false);
             }
         }
-        fetchUrusan();
+        fetchRoles();
     }, [token]);
 
-    const hapusUrusan = async(id: any) => {
+    const hapusRole = async(id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try{
-            const response = await fetch(`${API_URL}/role/delete/${id}`, {
+            const response = await fetch(`${API_URL}/roles/${id}`, {
                 method: "DELETE",
                 headers: {
                   Authorization: `${token}`,
@@ -70,7 +71,7 @@ const Table = () => {
                 alert("cant fetch data")
             }
             setRole(Role.filter((data) => (data.id !== id)))
-            AlertNotification("Berhasil", "Data Urusan Berhasil Dihapus", "success", 1000);
+            AlertNotification("Berhasil", "Data Role Berhasil Dihapus", "success", 1000);
         } catch(err){
             AlertNotification("Gagal", "cek koneksi internet atau database server", "error", 2000);
         }
@@ -121,7 +122,7 @@ const Table = () => {
                                         onClick={() => {
                                             AlertQuestion("Hapus?", "Hapus role yang dipilih?", "question", "Hapus", "Batal").then((result) => {
                                                 if(result.isConfirmed){
-                                                    hapusUrusan(data.id);
+                                                    hapusRole(data.id);
                                                 }
                                             });
                                         }}
