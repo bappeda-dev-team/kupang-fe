@@ -11,23 +11,47 @@ import { TbEye, TbEyeClosed } from "react-icons/tb";
 import { getToken } from "@/components/lib/Cookie";
 
 interface OptionType {
-    value: number;
+    value: number | null;
     label: string;
 }
 interface OptionTypeString {
     value: string;
     label: string;
 }
+interface OpdOptionType extends OptionTypeString {
+    opdId?: number;
+    namaOpd?: string;
+}
+interface PegawaiOptionType extends OptionTypeString {
+    pegawaiId?: number;
+    opdId?: number;
+    nama?: string;
+    namaPegawai?: string;
+}
+interface UserDetail {
+    id?: number;
+    kode_opd?: string;
+    nama_opd?: string;
+    nama?: string;
+    nama_pegawai?: string;
+    nip?: string;
+    opd_id?: number;
+    pegawai_id?: number;
+    status?: string;
+    role?: string;
+    role_id?: number;
+    is_active?: boolean;
+}
 interface OptionTypeBoolean {
     value: boolean;
     label: string;
 }
 interface FormValue {
-    nip: OptionTypeString;
+    nip: PegawaiOptionType;
     email: string;
     password: string;
-    is_active: OptionTypeBoolean;
-    role: OptionType[];
+    is_active?: OptionTypeBoolean | null;
+    role?: OptionType | null;
 }
 
 export const FormUser = () => {
@@ -37,14 +61,14 @@ export const FormUser = () => {
         handleSubmit,
         formState: { errors },
     } = useForm<FormValue>();
-    const [Nip, setNip] = useState<OptionTypeString | null>(null);
+    const [Nip, setNip] = useState<PegawaiOptionType | null>(null);
     const [Email, setEmail] = useState<string>('');
     const [Password, setPassword] = useState<string>('');
     const [Aktif, setAktif] = useState<OptionTypeBoolean | null>(null);
     const [Roles, setRoles] = useState<OptionType | null>(null);
-    const [Opd, setOpd] = useState<OptionTypeString | null>(null);
-    const [PegawaiOption, setPegawaiOption] = useState<OptionTypeString[]>([]);
-    const [OpdOption, setOpdOption] = useState<OptionTypeString[]>([]);
+    const [Opd, setOpd] = useState<OpdOptionType | null>(null);
+    const [PegawaiOption, setPegawaiOption] = useState<PegawaiOptionType[]>([]);
+    const [OpdOption, setOpdOption] = useState<OpdOptionType[]>([]);
     const [RolesOption, setRolesOption] = useState<OptionType[]>([]);
     const [IsLoading, setIsLoading] = useState<boolean>(false);
     const [Proses, setProses] = useState<boolean>(false);
@@ -56,22 +80,23 @@ export const FormUser = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/role/findall`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            if (!response.ok) {
-                throw new Error('cant fetch data opd');
-            }
-            const data = await response.json();
-            const role = data.data.map((item: any) => ({
-                value: item.id,
-                label: item.role,
-            }));
-            setRolesOption(role);
+        const response = await fetch(`${API_URL}/roles`, {
+            method: 'GET',
+            headers: {
+                Authorization: `${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error('cant fetch data opd');
+        }
+        const data = await response.json();
+        const payload = Array.isArray(data) ? data : data?.data ?? [];
+        const role = payload.map((item: any) => ({
+            value: item.id,
+            label: item.role,
+        }));
+        setRolesOption(role);
         } catch (err) {
             console.log('gagal mendapatkan data roles');
         } finally {
@@ -82,7 +107,7 @@ export const FormUser = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+            const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -95,7 +120,9 @@ export const FormUser = () => {
             const data = await response.json();
             const opd = data.data.map((item: any) => ({
                 value: item.kode_opd,
-                label: item.nama_opd,
+                label: item.nama_opd ?? item.nama,
+                opdId: item.id ?? item.opd_id,
+                namaOpd: item.nama_opd ?? item.nama,
             }));
             setOpdOption(opd);
         } catch (err) {
@@ -108,7 +135,7 @@ export const FormUser = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/pegawai/findall?kode_opd=${kode_opd}`, {
+            const response = await fetch(`${API_URL}/pegawais/opd/${kode_opd}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -118,16 +145,17 @@ export const FormUser = () => {
             if (!response.ok) {
                 throw new Error('cant fetch data opd');
             }
-            const data = await response.json();
-            if (data.code === 200) {
-                const pegawai = data.data.map((item: any) => ({
-                    value: item.nip,
-                    label: item.nama_pegawai,
-                }));
-                setPegawaiOption(pegawai);
-            } else {
-                console.log(data.data);
-            }
+            const result = await response.json();
+            const payload = Array.isArray(result) ? result : result?.data ?? [];
+            const pegawai = payload.map((item: any) => ({
+                value: item.nip,
+                label: item.nama ?? item.nama_pegawai ?? '-',
+                pegawaiId: item.id ?? item.pegawai_id,
+                opdId: item.opd_id ?? item.opdId,
+                nama: item.nama ?? item.nama_pegawai ?? '-',
+                namaPegawai: item.nama_pegawai ?? item.nama ?? '-',
+            }));
+            setPegawaiOption(pegawai);
         } catch (err) {
             console.log('gagal mendapatkan data pegawai');
         } finally {
@@ -143,19 +171,24 @@ export const FormUser = () => {
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const formData = {
-            //key : value
-            nip: data.nip?.value,
             email: data.email,
+            kode_opd: Opd?.value,
+            nama_opd: Opd?.label,
+            nama: Nip?.nama || Nip?.label || '',
+            nama_pegawai: Nip?.namaPegawai || Nip?.label || '',
+            nip: Nip?.value,
+            opd_id: Opd?.opdId ?? null,
+            pegawai_id: Nip?.pegawaiId ?? null,
             password: data.password,
-            is_active: data.is_active?.value,
-            role: [{
-                role_id: Roles?.value
-            }],
+            role: Roles?.label || '',
+            role_id: Roles?.value ?? null,
+            status: Aktif?.label || '',
+            is_active: data.is_active?.value ?? Aktif?.value,
         };
         // console.log(formData);
         try{
             setProses(true);
-            const response = await fetch(`${API_URL}/user/create`, {
+            const response = await fetch(`${API_URL}/users`, {
                 method: "POST",
                 headers: {
                   Authorization: `${token}`,
@@ -464,6 +497,7 @@ export const FormEditUser = () => {
     const [RolesOption, setRolesOption] = useState<OptionType[]>([]);
     const [IsLoading, setIsLoading] = useState<boolean>(false);
     const [Proses, setProses] = useState<boolean>(false);
+    const [UserDetail, setUserDetail] = useState<UserDetail | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean | null>(null);
     const [idNull, setIdNull] = useState<boolean | null>(null);
@@ -475,22 +509,23 @@ export const FormEditUser = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/role/findall`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            if (!response.ok) {
-                throw new Error('cant fetch data opd');
-            }
-            const data = await response.json();
-            const role = data.data.map((item: any) => ({
-                value: item.id,
-                label: item.role,
-            }));
-            setRolesOption(role);
+        const response = await fetch(`${API_URL}/roles`, {
+            method: 'GET',
+            headers: {
+                Authorization: `${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error('cant fetch data opd');
+        }
+        const data = await response.json();
+        const payload = Array.isArray(data) ? data : data?.data ?? [];
+        const role = payload.map((item: any) => ({
+            value: item.id,
+            label: item.role,
+        }));
+        setRolesOption(role);
         } catch (err) {
             console.log('gagal mendapatkan data roles');
         } finally {
@@ -508,7 +543,7 @@ export const FormEditUser = () => {
         const fetchUser = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`${API_URL}/user/detail/${id}`, {
+                const response = await fetch(`${API_URL}/users/${id}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
@@ -518,36 +553,55 @@ export const FormEditUser = () => {
                     throw new Error('terdapat kesalahan di koneksi backend');
                 }
                 const result = await response.json();
-                const data = result.data;
-                if (result.code == 400) {
+                const userData = result?.data ?? result;
+                if (result?.code === 400 || !userData) {
                     setIdNull(true);
-                } else if (result.code == 200) {
+                    setUserDetail(null);
+                } else {
+                    const activeValue =
+                        typeof userData.is_active === "boolean"
+                            ? userData.is_active
+                            : (userData.status?.toLowerCase() === "aktif");
+                    const activeOption =
+                        activeOptions.find((option) => option.value === activeValue) || null;
                     reset({
-                        nip: data.nip || '',
-                        email: data.email || '',
-                        is_active: data.is_active,
-                        // role: data.role?.map((item: any) => ({
-                        //     value: item.id,
-                        //     label: item.role,
-                        // })) || [],
+                        nip: userData.nip || '',
+                        email: userData.email || '',
+                        is_active: activeOption,
                     });
-                    if (data.nip) {
-                        const nip = {
-                            value: data.nip,
-                            label: data.nip,
-                        }
-                        setNip(nip);
+                    if (userData.nip) {
+                        setNip({
+                            value: userData.nip,
+                            label: userData.nip,
+                        });
                     }
-                    if(data.role){
-                        const role = {
-                            value: data.role[0].id,
-                            label: data.role[0].role,
-                        }
-                        setRoles(role);
-                    }
-                    setAktif(
-                        activeOptions.find((option) => option.value === data.is_active) || null
-                    );
+                    const roleOption: OptionType = {
+                        value: userData.role_id ?? userData.role?.id ?? null,
+                        label:
+                            typeof userData.role === 'string'
+                                ? userData.role
+                                : userData.role?.role ?? '',
+                    };
+                    setRoles(roleOption);
+                    setAktif(activeOption);
+                    setUserDetail({
+                        id: userData.id ?? Number(id),
+                        kode_opd: userData.kode_opd,
+                        nama_opd: userData.nama_opd,
+                        nama: userData.nama,
+                        nama_pegawai: userData.nama_pegawai,
+                        nip: userData.nip,
+                        opd_id: userData.opd_id,
+                        pegawai_id: userData.pegawai_id,
+                        status: userData.status,
+                        role:
+                            typeof userData.role === 'string'
+                                ? userData.role
+                                : userData.role?.role,
+                        role_id: userData.role_id ?? userData.role?.id,
+                        is_active: userData.is_active,
+                    });
+                    setIdNull(false);
                 }
             } catch (err) {
                 setError('gagal mengambil data sesuai id');
@@ -561,22 +615,29 @@ export const FormEditUser = () => {
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        //   const RolesIds = Roles?.map((Roles) => ({
-        //       role_id: Roles.value, // Ubah `value` menjadi `pegawai_id`
-        //   })) || [];
+        const detail = UserDetail;
         const formData = {
-            //key : value
-            nip: data.nip,
+            id: detail?.id ?? Number(id),
             email: data.email,
-            is_active: data.is_active?.value || Aktif?.value,
-            role: [{
-                role_id: Roles?.value
-            }],
+            kode_opd: detail?.kode_opd,
+            nama: detail?.nama,
+            nama_opd: detail?.nama_opd,
+            nama_pegawai: detail?.nama_pegawai,
+            nip:
+                data.nip?.value ||
+                Nip?.value ||
+                detail?.nip ||
+                '',
+            opd_id: detail?.opd_id ?? null,
+            pegawai_id: detail?.pegawai_id ?? null,
+            role: Roles?.label || detail?.role || '',
+            role_id: Roles?.value ?? detail?.role_id ?? null,
+            status: Aktif?.label || detail?.status || '',
+            is_active: Aktif?.value ?? detail?.is_active ?? null,
         };
-        // console.log(formData);
         try{
             setProses(true);
-            const response = await fetch(`${API_URL}/user/update/${id}`, {
+            const response = await fetch(`${API_URL}/users/${id}`, {
                 method: "PUT",
                 headers: {
                   Authorization: `${token}`,

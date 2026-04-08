@@ -15,15 +15,11 @@ interface OptionTypeString {
     label: string;
 }
 interface User {
-    id: string;
+    id: number;
     nip: string;
     email: string;
     nama_pegawai: string;
-    is_active: boolean;
-    role: roles[];
-}
-interface roles {
-    id: string;
+    status: string;
     role: string;
 }
 
@@ -62,46 +58,48 @@ const Table = () => {
 
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const fetchUrusan = async () => {
+        const fetchUsers = async () => {
+            if (!Opd?.value) {
+                return;
+            }
             setLoading(true);
+            setError(false);
             try {
-                const response = await fetch(`${API_URL}/user/findall?kode_opd=${Opd?.value}`, {
+                const response = await fetch(`${API_URL}/users/opd/${Opd.value}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
-                const result = await response.json();
-                const data = result.data;
-                if (data == null) {
-                    setDataNull(true);
-                    setUser([]);
-                } else if (data.code == 500) {
-                    setError(true);
-                    setUser([]);
-                } else if (result.code === 401) {
-                    setError(true);
-                } else {
-                    setError(false);
-                    setDataNull(false);
-                    setUser(data);
+                if (!response.ok) {
+                    throw new Error('gagal mengambil data user');
                 }
-                setUser(data);
+                const payload = await response.json();
+                if (payload.code !== 200) {
+                    throw new Error('response tidak berisi data user yang valid');
+                }
+                const users = Array.isArray(payload.data) ? payload.data : [];
+                setUser(users);
+                setDataNull(users.length === 0);
+                setError(false);
             } catch (err) {
+                console.error(err);
+                setUser([]);
                 setError(true);
-                console.error(err)
+                setDataNull(false);
             } finally {
                 setLoading(false);
             }
         }
-        fetchUrusan();
+        fetchUsers();
     }, [token, Opd]);
 
     const FilteredData = User?.filter((item: User) => {
         const params = searchQuery.toLowerCase();
         return (
-            item.nama_pegawai.toLowerCase().includes(params) ||
-            item.nip.toLowerCase().includes(params)
+            (item.nama_pegawai ?? '').toLowerCase().includes(params) ||
+            (item.nip ?? '').toLowerCase().includes(params) ||
+            (item.email ?? '').toLowerCase().includes(params)
         )
     });
 
@@ -109,7 +107,7 @@ const Table = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+            const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -135,7 +133,7 @@ const Table = () => {
     const hapusUrusan = async (id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try {
-            const response = await fetch(`${API_URL}/user/delete/${id}`, {
+            const response = await fetch(`${API_URL}/users/${id}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `${token}`,
@@ -272,14 +270,8 @@ const Table = () => {
                                     <td className="border-r border-b px-6 py-4">{data.nama_pegawai ? data.nama_pegawai : "-"}</td>
                                     <td className="border-r border-b px-6 py-4 text-center">{data.nip ? data.nip : "-"}</td>
                                     <td className="border-r border-b px-6 py-4 text-center">{data.email ? data.email : "-"}</td>
-                                    <td className="border-r border-b px-6 py-4 text-center">{data.is_active === true ? 'Aktif' : 'tidak aktif'}</td>
-                                    {data.role ?
-                                        <td className="border-r border-b px-6 py-4 text-center">
-                                            {data.role ? data.role.map((r: any) => r.role).join(", ") : "-"}
-                                        </td>
-                                        :
-                                        <td className="border-r border-b px-6 py-4 text-center">-</td>
-                                    }
+                                    <td className="border-r border-b px-6 py-4 text-center">{data.status || '-'}</td>
+                                    <td className="border-r border-b px-6 py-4 text-center">{data.role || '-'}</td>
                                     <td className="border-r border-b px-6 py-4">
                                         <div className="flex flex-col jutify-center items-center gap-2">
                                             <ButtonGreen className="w-full" halaman_url={`/DataMaster/masteruser/${data.id}`}>Edit</ButtonGreen>
