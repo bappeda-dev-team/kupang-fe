@@ -27,17 +27,31 @@ interface pegawai {
     nama_pegawai: string;
 }
 
+const mapApiToPegawai = (item: any): pegawai => ({
+    id: Number(item?.id ?? 0),
+    jabatan_id: item?.jabatan_id ?? null,
+    jenis_pegawai: item?.jenis_pegawai ?? "",
+    kode_opd: item?.kode_opd ?? "",
+    nama: item?.nama ?? item?.nama_pegawai ?? "",
+    nama_pegawai: item?.nama ?? item?.nama_pegawai ?? "",
+    nama_jabatan: item?.nama_jabatan ?? "",
+    nama_opd: item?.nama_opd ?? "",
+    nip: item?.nip ?? "",
+});
+
 const Table = () => {
 
     const { branding } = useBrandingContext();
     const [Pegawai, setPegawai] = useState<pegawai[]>([]);
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const [searchMode, setSearchMode] = useState<'nama' | 'nip'>('nama');
     const [Opd, setOpd] = useState<OptionTypeString | null>(null);
     const [error, setError] = useState<boolean | null>(null);
     const [Loading, setLoading] = useState<boolean | null>(null);
     const [DataNull, setDataNull] = useState<boolean | null>(null);
     const [OpdOption, setOpdOption] = useState<OptionTypeString[]>([]);
     const [IsLoading, setIsLoading] = useState<boolean>(false);
+    const [isSearching, setIsSearching] = useState<boolean>(false);
     const [LoadingOpd, setLoadingOpd] = useState<boolean>(false);
     const token = getToken();
 
@@ -98,62 +112,100 @@ const Table = () => {
     }, [branding])
 
     useEffect(() => {
+        if (!Opd?.value) {
+            return;
+        }
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const fetchPegawai = async () => {
-            setLoading(true)
+            setLoading(true);
             try {
-                const response = await fetch(`${API_URL}/pegawais/opd/${Opd?.value}`, {
+                const response = await fetch(`${API_URL}/pegawais/opd/${Opd.value}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
                 const result = await response.json();
-                const rawData = Array.isArray(result) ? result : result.data ?? result;
-                const data: pegawai[] | null = rawData
-                    ? rawData.map((item: any) => ({
-                        id: Number(item.id ?? 0),
-                        jabatan_id: item.jabatan_id ?? null,
-                        jenis_pegawai: item.jenis_pegawai ?? "",
-                        kode_opd: item.kode_opd ?? "",
-                        nama: item.nama ?? "",
-                        nama_pegawai: item.nama ?? "",
-                        nama_jabatan: item.nama_jabatan,
-                        nama_opd: item.nama_opd ?? "",
-                        nip: item.nip ?? "",
-                    }))
-                    : null;
-
-                if (data == null) {
-                    setDataNull(true);
-                    setPegawai([]);
-                } else if (result.code === 401) {
+                const unauthorized = response.status === 401 || result?.code === 401;
+                if (unauthorized) {
                     setError(true);
-                } else {
-                    setDataNull(false);
-                    setPegawai(data);
-                    setError(false);
+                    setPegawai([]);
+                    setDataNull(true);
+                    return;
                 }
+                const rawData = Array.isArray(result)
+                    ? result
+                    : Array.isArray(result?.data)
+                        ? result.data
+                        : [];
+                const data = rawData.map(mapApiToPegawai);
+                setDataNull(data.length === 0);
+                setPegawai(data);
+                setError(false);
             } catch (err) {
+                console.error(err);
                 setError(true);
-                console.error(err)
+                setPegawai([]);
+                setDataNull(true);
             } finally {
                 setLoading(false);
             }
-        }
-        if (Opd?.value != undefined) {
-            fetchPegawai();
-            setSearchQuery("");
-        }
+        };
+        fetchPegawai();
+        setSearchQuery("");
     }, [token, Opd, branding, FetchTrigger]);
 
-    const FilteredData = Pegawai?.filter((item: pegawai) => {
-        const params = searchQuery.toLowerCase();
-        return (
-            (item.nama || item.nama_pegawai || "").toLowerCase().includes(params) ||
-            (item.nip || "").toLowerCase().includes(params)
-        )
-    });
+    const handleSearchSubmit = async () => {
+        const query = searchQuery.trim();
+        if (!query) {
+            handleSearchReset();
+            return;
+        }
+        if (!Opd?.value) {
+            return;
+        }
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        setIsSearching(true);
+        try {
+            const response = await fetch(`${API_URL}/pegawais/search?${searchMode}=${encodeURIComponent(query)}`, {
+                headers: {
+                    Authorization: `${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            const result = await response.json();
+            const unauthorized = response.status === 401 || result?.code === 401;
+            if (unauthorized) {
+                setError(true);
+                setPegawai([]);
+                setDataNull(true);
+                return;
+            }
+            const rawData = Array.isArray(result)
+                ? result
+                : Array.isArray(result?.data)
+                    ? result.data
+                    : [];
+            const data = rawData.map(mapApiToPegawai);
+            setPegawai(data);
+            setDataNull(data.length === 0);
+            setError(false);
+        } catch (err) {
+            console.error(err);
+            setError(true);
+            setPegawai([]);
+            setDataNull(true);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSearchReset = () => {
+        setSearchQuery("");
+        setDataNull(false);
+        setIsSearching(false);
+        setFetchTrigger((prev) => !prev);
+    };
 
     const fetchOpd = async () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -290,16 +342,53 @@ const Table = () => {
                             }
                         }}
                     />
-                    <div className="flex px-2 items-center">
-                        <TbSearch className="absolute ml-4 text-slate-500" />
+                    <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm font-semibold">
+                        <button
+                            type="button"
+                            className={`px-3 py-1 rounded-md transition ${searchMode === 'nama' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}`}
+                            onClick={() => setSearchMode('nama')}
+                        >
+                            Nama
+                        </button>
+                        <button
+                            type="button"
+                            className={`px-3 py-1 rounded-md transition ${searchMode === 'nip' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}`}
+                            onClick={() => setSearchMode('nip')}
+                        >
+                            NIP
+                        </button>
+                    </div>
+                    <div className="relative flex-1 min-w-[220px]">
+                        <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
                             type="text"
                             placeholder="Cari nama pegawai / NIP"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="py-2 pl-10 pr-2 border rounded-lg border-gray-300"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSearchSubmit();
+                                }
+                            }}
+                            className="w-full border rounded-lg border-gray-300 py-2 pl-10 pr-2"
                         />
                     </div>
+                    <ButtonGreen
+                        className="px-4 py-2"
+                        disabled={isSearching}
+                        onClick={handleSearchSubmit}
+                    >
+                        Cari
+                    </ButtonGreen>
+                    <ButtonBlack
+                        className="px-4 py-2"
+                        disabled={isSearching}
+                        onClick={handleSearchReset}
+                    >
+                        Reset
+                    </ButtonBlack>
+                    {isSearching && <span className="text-sm text-slate-500">Mencari...</span>}
                 </div>
                 <div className="overflow-auto mx-3 my-2 rounded-t-xl border">
                     <table className="w-full">
@@ -315,14 +404,14 @@ const Table = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {DataNull || FilteredData.length === 0 ?
+                            {(DataNull || Pegawai.length === 0) ?
                                 <tr>
                                     <td className="px-6 py-3 uppercase" colSpan={13}>
                                         Data Kosong / Belum Ditambahkan
                                     </td>
                                 </tr>
                                 :
-                                FilteredData.map((data, index) => (
+                                Pegawai.map((data, index) => (
                                     <tr key={data?.id}>
                                         <td className="border-r border-b px-6 py-4">{index + 1}</td>
                                          <td className="border-r border-b px-6 py-4">{data?.nama ? data.nama : data?.nama_pegawai ? data.nama_pegawai : "-"}</td>
