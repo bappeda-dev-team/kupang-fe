@@ -12,7 +12,6 @@ interface Periode {
     id: number;
     tahun_awal: string;
     tahun_akhir: string;
-    tahun_list: string;
     jenis_periode: string;
 }
 
@@ -36,21 +35,27 @@ const Table = () => {
         const fetchPeriode = async () => {
             setLoading(true)
             try {
-                const response = await fetch(`${API_URL}/periode/findall`, {
+                const response = await fetch(`${API_URL}/periodes`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
-                const result = await response.json();
-                const data = result.data;
-                if (data == null || data.length == 0) {
+                if (!response.ok) {
+                    setError(true);
                     setDataNull(true);
                     setPeriode([]);
-                } else {
-                    setDataNull(false);
-                    setPeriode(data);
+                    return;
                 }
+                const result = await response.json();
+                const data = Array.isArray(result)
+                    ? result
+                    : Array.isArray(result?.data)
+                        ? result.data
+                        : [];
+                setPeriode(data);
+                setDataNull(data.length === 0);
+                setError(false);
             } catch (err) {
                 setError(true);
                 console.error(err)
@@ -82,7 +87,7 @@ const Table = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         // console.log(id);
         try {
-            const response = await fetch(`${API_URL}/periode/delete/${id}`, {
+            const response = await fetch(`${API_URL}/periodes/${id}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `${token}`,

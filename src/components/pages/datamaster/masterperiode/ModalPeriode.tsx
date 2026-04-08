@@ -49,22 +49,22 @@ export const ModalPeriode: React.FC<modal> = ({ isOpen, onClose, id, metode, onS
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const fetchPeriode = async () => {
             try {
-                const response = await fetch(`${API_URL}/periode/detail/${id}`, {
+                const response = await fetch(`${API_URL}/periodes/${id}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
                 const result = await response.json();
-                const hasil = result.data;
-                if(hasil.tahun_awal){
-                    setTahunAwal(hasil.tahun_awal);
+                const data = result?.data ?? result;
+                if (data?.tahun_awal) {
+                    setTahunAwal(data.tahun_awal);
                 }
-                if(hasil.tahun_akhir){
-                    setTahunAkhir(hasil.tahun_akhir);
+                if (data?.tahun_akhir) {
+                    setTahunAkhir(data.tahun_akhir);
                 }
-                if(hasil.jenis_periode){
-                    setJenisPeriode(hasil.jenis_periode);
+                if (data?.jenis_periode) {
+                    setJenisPeriode(data.jenis_periode);
                 }
             } catch (err) {
                 console.log(err);
@@ -77,46 +77,26 @@ export const ModalPeriode: React.FC<modal> = ({ isOpen, onClose, id, metode, onS
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const formDataNew = {
-            //key : value
-            tahun_awal: String(TahunAwal),
-            tahun_akhir: String(TahunAkhir),
+        const payloadBase = {
+            tahun_awal: TahunAwal,
+            tahun_akhir: TahunAkhir,
             jenis_periode: JenisPeriode ? JenisPeriode : "RPJMD"
         };
-        const formDataEdit = {
-            //key : value
-            id: id,
-            tahun_awal: String(TahunAwal),
-            tahun_akhir: String(TahunAkhir),
-            jenis_periode: JenisPeriode ? JenisPeriode : "RPJMD"
-        };
-        const getBody = () => {
-            if (metode === "lama") return formDataEdit;
-            if (metode === "baru") return formDataNew;
-            return {}; // Default jika metode tidak sesuai
-        };
-        // metode === 'baru' && console.log("baru :", formDataNew);
-        // metode === 'lama' && console.log("lama :", formDataEdit);
         try {
-            let url = "";
-            if (metode === "lama") {
-                url = `periode/update/${id}`;
-            } else if (metode === "baru") {
-                url = `periode/create`;
-            } else {
-                url = '';
-            }
+            const isEdit = metode === "lama";
+            const url = isEdit ? `periodes/${id}` : "periodes";
+            const method = isEdit ? "PUT" : "POST";
             setProses(true);
             const response = await fetch(`${API_URL}/${url}`, {
-                method: metode === 'lama' ? "PUT" : "POST",
+                method,
                 headers: {
                     Authorization: `${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(getBody()),
+                body: JSON.stringify(isEdit ? { id, ...payloadBase } : payloadBase),
             });
             if (response.ok) {
-                AlertNotification("Berhasil", `Berhasil ${metode === 'baru' ? "Menambahkan" : "Mengubah"} Periode`, "success", 1000);
+                AlertNotification("Berhasil", `Berhasil ${isEdit ? "Mengubah" : "Menambahkan"} Periode`, "success", 1000);
                 onClose();
                 onSuccess();
             } else {
