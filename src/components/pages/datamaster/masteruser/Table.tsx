@@ -23,11 +23,23 @@ interface User {
     role: string;
 }
 
+const mapApiToUser = (item: any): User => ({
+    id: Number(item?.id ?? item?.user_id ?? 0),
+    nip: item?.nip ?? item?.nip_user ?? '',
+    email: item?.email ?? '',
+    nama_pegawai: item?.nama_pegawai ?? item?.nama ?? '',
+    status: item?.status ?? '',
+    role: typeof item?.role === 'string'
+        ? item.role
+        : (item?.role?.role ?? item?.role?.name ?? ''),
+});
+
 const Table = () => {
 
     const { branding } = useBrandingContext();
     const [User, setUser] = useState<User[]>([]);
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const [searchMode, setSearchMode] = useState<'nama' | 'nip'>('nama');
     const [Opd, setOpd] = useState<OptionTypeString | null>(null);
     const [LevelUser, setLevelUser] = useState<string>('');
     const [OpdOption, setOpdOption] = useState<OptionTypeString[]>([]);
@@ -37,6 +49,8 @@ const Table = () => {
     const [LoadingOpd, setLoadingOpd] = useState<boolean>(false);
     const [DataNull, setDataNull] = useState<boolean | null>(null);
     const token = getToken();
+    const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [FetchTrigger, setFetchTrigger] = useState<boolean>(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -79,8 +93,9 @@ const Table = () => {
                     throw new Error('response tidak berisi data user yang valid');
                 }
                 const users = Array.isArray(payload.data) ? payload.data : [];
-                setUser(users);
-                setDataNull(users.length === 0);
+                const normalized = users.map(mapApiToUser);
+                setUser(normalized);
+                setDataNull(normalized.length === 0);
                 setError(false);
             } catch (err) {
                 console.error(err);
@@ -92,16 +107,53 @@ const Table = () => {
             }
         }
         fetchUsers();
-    }, [token, Opd]);
+    }, [token, Opd, FetchTrigger]);
 
-    const FilteredData = User?.filter((item: User) => {
-        const params = searchQuery.toLowerCase();
-        return (
-            (item.nama_pegawai ?? '').toLowerCase().includes(params) ||
-            (item.nip ?? '').toLowerCase().includes(params) ||
-            (item.email ?? '').toLowerCase().includes(params)
-        )
-    });
+    const handleSearchSubmit = async () => {
+        const query = searchQuery.trim();
+        if (!query) {
+            handleSearchReset();
+            return;
+        }
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        setIsSearching(true);
+        setError(false);
+        try {
+            const response = await fetch(`${API_URL}/users/search?${searchMode}=${encodeURIComponent(query)}`, {
+                headers: {
+                    Authorization: `${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (!response.ok) {
+                throw new Error('gagal mencari data user');
+            }
+            const payload = await response.json();
+            const entries = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.data)
+                    ? payload.data
+                    : [];
+            const normalized = entries.map(mapApiToUser);
+            setUser(normalized);
+            setDataNull(normalized.length === 0);
+            setError(false);
+        } catch (err) {
+            console.error(err);
+            setUser([]);
+            setDataNull(true);
+            setError(true);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSearchReset = () => {
+        setSearchQuery("");
+        setDataNull(false);
+        setError(false);
+        setFetchTrigger((prev) => !prev);
+    };
 
     const fetchOpd = async () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -232,16 +284,53 @@ const Table = () => {
                         }
                     }}
                 />
-                <div className="flex px-2 items-center">
-                    <TbSearch className="absolute ml-4 text-slate-500" />
+                <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm font-semibold">
+                    <button
+                        type="button"
+                        className={`px-3 py-1 rounded-md transition ${searchMode === 'nama' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}`}
+                        onClick={() => setSearchMode('nama')}
+                    >
+                        Nama
+                    </button>
+                    <button
+                        type="button"
+                        className={`px-3 py-1 rounded-md transition ${searchMode === 'nip' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}`}
+                        onClick={() => setSearchMode('nip')}
+                    >
+                        NIP
+                    </button>
+                </div>
+                <div className="relative flex-1 min-w-[220px]">
+                    <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input
                         type="text"
                         placeholder="Cari nama pegawai / NIP"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="py-2 pl-10 pr-2 border rounded-lg border-gray-300"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSearchSubmit();
+                            }
+                        }}
+                        className="w-full border rounded-lg border-gray-300 py-2 pl-10 pr-2"
                     />
                 </div>
+                <ButtonGreen
+                    className="px-4 py-2"
+                    onClick={handleSearchSubmit}
+                    disabled={isSearching}
+                >
+                    Cari
+                </ButtonGreen>
+                <ButtonBlack
+                    className="px-4 py-2"
+                    onClick={handleSearchReset}
+                    disabled={isSearching}
+                >
+                    Reset
+                </ButtonBlack>
+                {isSearching && <span className="text-sm text-slate-500">Mencari...</span>}
             </div>
             <div className="overflow-auto m-2 rounded-t-xl border">
                 <table className="w-full">
@@ -256,15 +345,15 @@ const Table = () => {
                             <th className="border-r border-b px-6 py-3 min-w-[100px]">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {DataNull || FilteredData.length === 0 ?
-                            <tr>
-                                <td className="px-6 py-3 uppercase" colSpan={13}>
-                                    Tidak ada User / Belum Ditambahkan
-                                </td>
-                            </tr>
-                            :
-                            FilteredData.map((data, index) => (
+                <tbody>
+                    {(DataNull || User.length === 0) ?
+                        <tr>
+                            <td className="px-6 py-3 uppercase" colSpan={13}>
+                                Tidak ada User / Belum Ditambahkan
+                            </td>
+                        </tr>
+                        :
+                        User.map((data, index) => (
                                 <tr key={data.id}>
                                     <td className="border-r border-b px-6 py-4 text-center">{index + 1}</td>
                                     <td className="border-r border-b px-6 py-4">{data.nama_pegawai ? data.nama_pegawai : "-"}</td>
