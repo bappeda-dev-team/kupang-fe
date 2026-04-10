@@ -2,9 +2,10 @@
 
 import { ButtonSky, ButtonGreen, ButtonRed } from "@/components/global/Button";
 import { AlertNotification, AlertQuestion } from "@/components/global/Alert";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { LoadingClip } from "@/components/global/Loading";
-import { getToken } from "@/components/lib/Cookie";
+import { getToken, getOpdTahun } from "@/components/lib/Cookie";
+import { OpdNull } from "@/components/global/OpdTahunNull";
 import { ModalAddUsulan } from "../ModalUsulan";
 
 interface Usulan {
@@ -26,54 +27,86 @@ const Table = () => {
     const [TriggerFetch, setTriggerFetch] = useState<boolean>(false);
     const [ModalEdit, setModalEdit] = useState<boolean>(false);
     const [IdEdit, setIdEdit] = useState<string>('');
-    const [Error, setError] = useState<boolean | null>(null);
-    const [Loading, setLoading] = useState<boolean | null>(null);
-    const [DataNull, setDataNull] = useState<boolean | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [Loading, setLoading] = useState<boolean>(false);
+    const [DataNull, setDataNull] = useState<boolean>(false);
     const token = getToken();
+    const headers = useMemo(() => {
+        const value: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (token) {
+            value.Authorization = `${token}`;
+        }
+        return value;
+    }, [token]);
+    const [SelectedOpd, setSelectedOpd] = useState<{ value: string; label?: string } | null>(null);
 
     useEffect(() => {
+        const { opd } = getOpdTahun();
+        if (opd?.value) {
+            setSelectedOpd({
+                value: opd.value,
+                label: opd.label,
+            });
+        } else {
+            setSelectedOpd(null);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!SelectedOpd) {
+            setPokir([]);
+            setDataNull(false);
+            setErrorMessage(null);
+            return;
+        }
+
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const fetchPokir = async() => {
-            setLoading(true)
-            try{
-                const response = await fetch(`${API_URL}/usulan_pokok_pikiran/findall`, {
-                    headers: {
-                        Authorization: `${token}`,
-                        'Content-Type': 'application/json',
-                      },
+        const fetchPokir = async () => {
+            setLoading(true);
+            setErrorMessage(null);
+            try {
+                const response = await fetch(`${API_URL}/pokok-pikirans/opd/${SelectedOpd.value}`, {
+                    headers,
                 });
-                const result = await response.json();
-                const data = result.usulan_pokok_pikiran;
-                if(data.length == 0){
-                    setDataNull(true);
-                    setPokir([]);
-                } else if(result.code === 401){
-                    setError(true);
-                } else {
-                    setDataNull(false);
-                    setPokir(data);
-                    setError(false);
+                if (!response.ok) {
+                    throw new Error("Gagal memuat data pokok pikiran");
                 }
-                setPokir(data);
-            } catch(err){
-                setError(true);
-                console.error(err)
-            } finally{
+                const payload = await response.json();
+                let rows: Usulan[] = [];
+                if (Array.isArray(payload)) {
+                    rows = payload;
+                } else if (Array.isArray(payload.data)) {
+                    rows = payload.data;
+                } else if (Array.isArray(payload.pokok_pikirans)) {
+                    rows = payload.pokok_pikirans;
+                } else if (Array.isArray(payload.usulan_pokok_pikiran)) {
+                    rows = payload.usulan_pokok_pikiran;
+                }
+                setPokir(rows);
+                setDataNull(rows.length === 0);
+            } catch (err) {
+                console.error(err);
+                setPokir([]);
+                setDataNull(true);
+                const message =
+                    err instanceof Error ? err.message : "Periksa koneksi internet atau database server";
+                setErrorMessage(message);
+            } finally {
                 setLoading(false);
             }
-        }
+        };
+
         fetchPokir();
-    }, [token, TriggerFetch]);
+    }, [SelectedOpd, headers, TriggerFetch]);
 
     const hapusPokir = async(id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try{
-            const response = await fetch(`${API_URL}/usulan_pokok_pikiran/delete/${id}`, {
+            const response = await fetch(`${API_URL}/pokok-pikirans/${id}`, {
                 method: "DELETE",
-                headers: {
-                    Authorization: `${token}`,
-                    'Content-Type': 'application/json',
-                  },
+                headers,
             })
             if(!response.ok){
                 alert("cant fetch data")
@@ -89,13 +122,24 @@ const Table = () => {
         setModalNew((prev) => !prev);
     }
     const handleModalEdit = (id: string) => {
-        setModalEdit(true);
         setIdEdit(id);
+        setModalEdit(true);
     }
     const handleModalEditClose = () => {
         setModalEdit(false);
         setIdEdit('');
     }
+
+    if(!SelectedOpd){
+        return (
+            <div className="mt-3 rounded-xl shadow-lg border">
+                <OpdNull />
+                <div className="flex justify-center uppercase text-sm text-gray-600 pb-5">
+                    Pilih OPD di header dan klik &ldquo;Aktifkan&rdquo; untuk melihat data pokok pikiran.
+                </div>
+            </div>
+        );
+    }   
 
     if(Loading){
         return (    
@@ -103,10 +147,10 @@ const Table = () => {
                 <LoadingClip className="mx-5 py-5"/>
             </div>
         );
-    } else if(Error){
+    } else if(errorMessage){
         return (
             <div className="border p-5 rounded-xl shadow-xl">
-                <h1 className="text-red-500 mx-5 py-5">Periksa koneksi internet atau database server</h1>
+                <h1 className="text-red-500 mx-5 py-5">{errorMessage}</h1>
             </div>
         )
     }
@@ -120,6 +164,7 @@ const Table = () => {
                 isOpen={ModalNew}
                 onClose={handleModalNew}
                 onSuccess={() => setTriggerFetch((prev) => !prev)}
+                isMasterData
             />
             <div className="overflow-auto m-2 rounded-t-xl border">
                 <table className="w-full">
@@ -165,6 +210,7 @@ const Table = () => {
                                         isOpen={ModalEdit}
                                         id={IdEdit}
                                         onSuccess={() => setTriggerFetch((prev) => !prev)}
+                                        isMasterData
                                     />
                                     <ButtonRed 
                                         className="w-full"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { ButtonSky, ButtonRed } from '@/components/global/Button';
 import { AlertNotification } from "@/components/global/Alert";
@@ -51,6 +51,15 @@ export const ModalAddUsulan: React.FC<modal> = ({ isOpen, onClose, jenis, metode
 
     const [Proses, setProses] = useState<boolean>(false);
     const token = getToken();
+    const headers = useMemo(() => {
+        const value: Record<string, string> = {
+            "Content-Type": "application/json",
+        };
+        if (token) {
+            value.Authorization = `${token}`;
+        }
+        return value;
+    }, [token]);
 
     useEffect(() => {
         const fetchUser = getUser();
@@ -80,10 +89,7 @@ export const ModalAddUsulan: React.FC<modal> = ({ isOpen, onClose, jenis, metode
             if(!id) return;
             try{
                 const response = await fetch(`${API_URL}/musrenbangs/${id}`, {
-                    headers: {
-                        Authorization: `${token}`,
-                        'Content-Type': 'application/json',
-                    },
+                    headers,
                 });
                 const data = await response.json();
                 const record =
@@ -108,10 +114,7 @@ export const ModalAddUsulan: React.FC<modal> = ({ isOpen, onClose, jenis, metode
         const fetchMusrenbang = async() => {
             try{
                 const response = await fetch(`${API_URL}/usulan_musrebang/detail/${id}`, {
-                    headers: {
-                        Authorization: `${token}`,
-                        'Content-Type': 'application/json',
-                      },
+                    headers,
                 });
                 const result = await response.json();
                 const data = result.usulan_musrebang;
@@ -134,10 +137,7 @@ export const ModalAddUsulan: React.FC<modal> = ({ isOpen, onClose, jenis, metode
         const fetchPokir = async() => {
             try{
                 const response = await fetch(`${API_URL}/usulan_pokok_pikiran/detail/${id}`, {
-                    headers: {
-                        Authorization: `${token}`,
-                        'Content-Type': 'application/json',
-                      },
+                    headers,
                 });
                 const result = await response.json();
                 const data = result.usulan_pokok_pikiran;
@@ -154,20 +154,54 @@ export const ModalAddUsulan: React.FC<modal> = ({ isOpen, onClose, jenis, metode
                 console.error(err)
             } 
         }
+        const fetchMasterPokir = async () => {
+            if(!id) return;
+            try{
+                const response = await fetch(`${API_URL}/pokok-pikirans/${id}`, {
+                    headers,
+                });
+                if (!response.ok) {
+                    throw new Error("Gagal memuat data pokok pikiran");
+                }
+                const payload = await response.json();
+                const data =
+                    payload?.data ??
+                    payload?.pokok_pikirans ??
+                    payload?.usulan_pokok_pikiran ??
+                    payload;
+                setUsulan(data?.usulan ?? "");
+                setAlamat(data?.alamat ?? "");
+                setUraian(data?.uraian ?? "");
+                setStatus(data?.status ?? "");
+                if (data?.tahun) {
+                    setTahun({ value: data.tahun, label: data.tahun });
+                }
+                if (data?.kode_opd) {
+                    setSelectedOpd({ value: data.kode_opd, label: data.nama_opd ?? data.kode_opd });
+                }
+            } catch(err){
+                console.error(err)
+            } 
+        }
         if(isMasterData && jenis === 'musrenbang' && metode === 'lama' && isOpen){
             fetchMasterMusrenbang();
         } else if(jenis === 'musrenbang' && metode === 'lama' && isOpen){
             fetchMusrenbang();
         } else if(jenis === 'pokir' && metode === 'lama' && isOpen){
-            fetchPokir();
+            if(isMasterData){
+                fetchMasterPokir();
+            } else {
+                fetchPokir();
+            }
         }
-    }, [token, jenis, metode, id, isOpen, isMasterData])
+    }, [headers, jenis, metode, id, isOpen, isMasterData])
 
     const onSubmit: SubmitHandler<FormValue> = async () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try{
             setProses(true);
             const isMasterCreation = isMasterData && jenis === "musrenbang" && metode === "baru";
+            const isMasterPokirCreation = isMasterData && jenis === "pokir" && metode === "baru";
             const tahunValue = Tahun?.value ?? null;
             const statusValue = Status || null;
             const payload = {
@@ -182,6 +216,7 @@ export const ModalAddUsulan: React.FC<modal> = ({ isOpen, onClose, jenis, metode
             let url = "";
             let method: "POST" | "PUT" = "POST";
             const isMasterUpdate = isMasterData && jenis === "musrenbang" && metode === "lama";
+            const isMasterPokirUpdate = isMasterData && jenis === "pokir" && metode === "lama";
             if (isMasterCreation) {
                 url = "musrenbangs";
             } else if (isMasterUpdate && id) {
@@ -190,16 +225,19 @@ export const ModalAddUsulan: React.FC<modal> = ({ isOpen, onClose, jenis, metode
             } else if (jenis === "musrenbang") {
                 url = metode === "baru" ? "usulan_musrebang/create" : `usulan_musrebang/update/${id}`;
                 method = metode === "baru" ? "POST" : "PUT";
+            } else if (isMasterPokirCreation) {
+                url = "pokok-pikirans";
+                method = "POST";
+            } else if (isMasterPokirUpdate && id) {
+                url = `pokok-pikirans/${id}`;
+                method = "PUT";
             } else if (jenis === "pokir") {
                 url = metode === "baru" ? "usulan_pokok_pikiran/create" : `usulan_pokok_pikiran/update/${id}`;
                 method = metode === "baru" ? "POST" : "PUT";
             }
-            const response = await fetch(`${API_URL}/${url}`, {
-                method,
-                headers: {
-                    Authorization: `${token}`,
-                    'Content-Type': 'application/json',
-                },
+                const response = await fetch(`${API_URL}/${url}`, {
+                    method,
+                    headers,
                 body: JSON.stringify(payload),
             });
             if(response.ok){
