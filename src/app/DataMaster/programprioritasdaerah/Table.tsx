@@ -7,17 +7,17 @@ import { TbPencil, TbTrash, TbCircleX, TbCircleCheck, TbMistOff, TbMist, TbCircl
 import { ButtonBlackBorder, ButtonSkyBorder, ButtonGreen, ButtonRed } from "@/components/global/Button";
 import { AlertQuestion, AlertNotification } from "@/components/global/Alert";
 import { useBrandingContext } from "@/context/BrandingContext";
-import { ModalProgramUnggulan } from "./ModalProgramUnggulan";
+import { ModalProgramPrioritasDaerah } from "./ModalProgramPrioritasDaerah";
 
 interface Table {
     tahun_awal: string;
     tahun_akhir: string;
 }
-interface ProgramUnggulan {
+interface ProgramPrioritasDaerah {
     id: number;
-    kode_program_unggulan: string;
-    nama_program_unggulan: string;
-    is_active: boolean;
+    kode_program_prioritas_daerah: string;
+    nama_program_prioritas_daerah: string;
+    is_active: string;
     rencana_implementasi: string;
     keterangan: string;
     tahun_awal: string;
@@ -27,7 +27,7 @@ interface ProgramUnggulan {
 const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
     const token = getToken();
 
-    const [Data, setData] = useState<ProgramUnggulan[]>([]);
+    const [Data, setData] = useState<ProgramPrioritasDaerah[]>([]);
     const [Loading, setLoading] = useState<boolean>(false);
     const [DataNull, setDataNull] = useState<boolean>(false);
     const [Error, setError] = useState<boolean>(false);
@@ -37,7 +37,7 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
     const [ModalEdit, setModalEdit] = useState<boolean>(false);
     const [ModalBaru, setModalBaru] = useState<boolean>(false);
 
-    const handleModalEdit = (data: ProgramUnggulan | null) => {
+    const handleModalEdit = (data: ProgramPrioritasDaerah | null) => {
         if (ModalEdit) {
             setModalEdit(false);
             setDataEdit(null);
@@ -55,11 +55,11 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
     }
 
     useEffect(() => {
-        const fetchProgramUnggulan = async () => {
+        const fetchProgramPrioritasDaerah = async () => {
             const API_URL = process.env.NEXT_PUBLIC_API_URL;
             setLoading(true)
             try {
-                const response = await fetch(`${API_URL}/program_unggulan/findall/${tahun_awal}/${tahun_akhir}`, {
+                const response = await fetch(`${API_URL}/program-prioritas-daerahs/tahun/${tahun_awal}/${tahun_akhir}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
@@ -87,13 +87,13 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                 setError(false);
             }
         }
-        fetchProgramUnggulan();
+        fetchProgramPrioritasDaerah();
     }, [tahun_akhir, tahun_awal, token, FetchTrigger]);
 
-    const hapusProgramUnggulan = async (id: any) => {
+    const hapusProgramPrioritasDaerah = async (id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try {
-            const response = await fetch(`${API_URL}/program_unggulan/delete/${id}`, {
+            const response = await fetch(`${API_URL}/program-prioritas-daerahs/${id}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `${token}`,
@@ -104,7 +104,7 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                 alert("cant fetch data")
             }
             setData(Data.filter((data) => (data.id !== id)))
-            AlertNotification("Berhasil", "Data Program Unggulan Berhasil Dihapus", "success", 1000);
+            AlertNotification("Berhasil", "Data Program Prioritas Daerah Berhasil Dihapus", "success", 1000);
         } catch (err) {
             AlertNotification("Gagal", "cek koneksi internet atau database server", "error", 2000);
         }
@@ -131,14 +131,14 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                 onClick={handleModalBaru}
             >
                 <TbCirclePlus />
-                Tambah Program Unggulan
+                Tambah Program Prioritas Daerah
             </ButtonSkyBorder>
             <div className="overflow-auto m-2 rounded-t-xl border">
                 <table className="w-full">
                     <thead>
                         <tr className="bg-green-500 text-white">
                             <th className="border-r border-b px-6 py-3 text-center">No</th>
-                            <th className="border-r border-b px-6 py-3 min-w-[200px]">Nama Program Unggulan / Hebat</th>
+                            <th className="border-r border-b px-6 py-3 min-w-[200px]">Nama Program Prioritas Daerah / Hebat</th>
                             <th className="border-r border-b px-6 py-3 min-w-[300px]">Rencana Implementasi</th>
                             <th className="border-r border-b px-6 py-3 min-w-[150px]">Status</th>
                             <th className="border-r border-b px-6 py-3 min-w-[150px]">Tahun</th>
@@ -154,18 +154,18 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                                 </td>
                             </tr>
                         ) : (
-                            Data.map((item: ProgramUnggulan, index: number) => (
+                        Data.map((item: ProgramPrioritasDaerah, index: number) => (
                                 <tr key={index}>
                                     <td className="border-x border-b border-green-500 py-4 px-3 text-center">{index + 1}</td>
-                                    <td className="border-r border-b border-green-500 px-6 py-4 font-semibold">{item.nama_program_unggulan || "-"}</td>
+                                    <td className="border-r border-b border-green-500 px-6 py-4 font-semibold">{item.nama_program_prioritas_daerah || "-"}</td>
                                     <td className="border-r border-b border-green-500 px-6 py-4">{item.rencana_implementasi || "-"}</td>
                                     <td className="border-r border-b border-green-500 px-6 py-4">
-                                        {item.is_active ? 
+                                        {item.is_active === 'true' ?
                                             <p className="flex items-center gap-1">
                                                 <TbCircleCheck />
-                                                Digunakan 
+                                                Digunakan
                                             </p>
-                                            : 
+                                            :
                                             <p className="flex items-center gap-1">
                                                 <TbHourglass />
                                                 Pending
@@ -184,9 +184,9 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                                                 Edit
                                             </ButtonGreen>
                                             <ButtonRed className="flex items-center gap-1 w-full" onClick={() => {
-                                                AlertQuestion("Hapus?", "Hapus Program Unggulan yang dipilih?", "question", "Hapus", "Batal").then((result) => {
+                                                AlertQuestion("Hapus?", "Hapus Program Prioritas Daerah yang dipilih?", "question", "Hapus", "Batal").then((result) => {
                                                     if (result.isConfirmed) {
-                                                        hapusProgramUnggulan(item.id);
+                                                        hapusProgramPrioritasDaerah(item.id);
                                                     }
                                                 });
                                             }}>
@@ -202,7 +202,7 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                 </table>
             </div>
             {ModalBaru &&
-                <ModalProgramUnggulan
+                <ModalProgramPrioritasDaerah
                     jenis="baru"
                     onClose={() => handleModalBaru()}
                     isOpen={ModalBaru}
@@ -212,7 +212,7 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                 />
             }
             {ModalEdit &&
-                <ModalProgramUnggulan
+                <ModalProgramPrioritasDaerah
                     jenis="edit"
                     onClose={() => handleModalEdit(null)}
                     isOpen={ModalEdit}

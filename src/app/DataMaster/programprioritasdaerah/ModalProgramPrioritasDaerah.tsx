@@ -8,10 +8,10 @@ import { getToken } from "@/components/lib/Cookie";
 import { LoadingButtonClip } from "@/components/global/Loading";
 import { useBrandingContext } from "@/context/BrandingContext";
 
-interface ProgramUnggulan {
+interface ProgramPrioritasDaerah {
     id: number;
-    kode_program_unggulan: string;
-    nama_program_unggulan: string;
+    kode_program_prioritas_daerah: string;
+    nama_program_prioritas_daerah: string;
     rencana_implementasi: string;
     keterangan: string;
     tahun_awal: string;
@@ -22,27 +22,31 @@ interface ModalProps {
     onClose: () => void;
     onSuccess: () => void;
     jenis: "baru" | "edit";
-    dataEdit?: ProgramUnggulan;
+    dataEdit?: ProgramPrioritasDaerah;
     tahun_awal: string;
     tahun_akhir: string;
 }
 
 interface FormValue {
-    nama_program_unggulan: string,
+    kode_program_prioritas_daerah: string,
+    nama_program_prioritas_daerah: string,
     rencana_implementasi: string,
     keterangan: string,
     tahun_awal: string,
     tahun_akhir: string,
+    is_active: string,
 }
 
-export const ModalProgramUnggulan: React.FC<ModalProps> = ({ isOpen, onClose, dataEdit, jenis, onSuccess, tahun_awal, tahun_akhir }) => {
-    const { control, handleSubmit, reset, formState:{ errors }} = useForm<FormValue>({
+export const ModalProgramPrioritasDaerah: React.FC<ModalProps> = ({ isOpen, onClose, dataEdit, jenis, onSuccess, tahun_awal, tahun_akhir }) => {
+    const{ control, handleSubmit, reset, formState:{ errors }} = useForm<FormValue>({
         defaultValues: {
-            nama_program_unggulan: dataEdit?.nama_program_unggulan,
+            kode_program_prioritas_daerah: dataEdit?.kode_program_prioritas_daerah,
+            nama_program_prioritas_daerah: dataEdit?.nama_program_prioritas_daerah,
             rencana_implementasi: dataEdit?.rencana_implementasi,
             keterangan: dataEdit?.keterangan,
             tahun_awal: tahun_awal,
             tahun_akhir: tahun_akhir,
+            is_active: "true",
         },
     });
 
@@ -52,11 +56,13 @@ export const ModalProgramUnggulan: React.FC<ModalProps> = ({ isOpen, onClose, da
 
     const handleClose = () => {
         reset({
-            nama_program_unggulan: "",
+            kode_program_prioritas_daerah: "",
+            nama_program_prioritas_daerah: "",
             rencana_implementasi: "",
             keterangan: "",
             tahun_awal: "",
             tahun_akhir: "",
+            is_active: "true",
         });
         onClose();
     };
@@ -65,19 +71,21 @@ export const ModalProgramUnggulan: React.FC<ModalProps> = ({ isOpen, onClose, da
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         let endpoint = "";
         if (jenis === "edit") {
-            endpoint = `program_unggulan/update/${dataEdit?.id}`;
+            endpoint = `program-prioritas-daerahs/${dataEdit?.id}`;
         } else if (jenis === "baru") {
-            endpoint = `program_unggulan/create`;
+            endpoint = `program-prioritas-daerahs`;
         } else {
             endpoint = '';
         }
         const formData = {
             //key : value
-            nama_program_unggulan: data.nama_program_unggulan,
+            kode_program_prioritas_daerah: data.kode_program_prioritas_daerah,
+            nama_program_prioritas_daerah: data.nama_program_prioritas_daerah,
             rencana_implementasi: data.rencana_implementasi,
             keterangan: data.keterangan,
             tahun_awal: tahun_awal,
             tahun_akhir: tahun_akhir,
+            is_active: data.is_active,
         };
         // console.log(formData);
         try {
@@ -92,7 +100,7 @@ export const ModalProgramUnggulan: React.FC<ModalProps> = ({ isOpen, onClose, da
             });
             const result = await response.json();
             if (result.code === 200 || result.code === 201) {
-                AlertNotification("Berhasil", jenis === 'baru' ? "Berhasil menambahkan Program Unggulan" : "Berhasil Mengubah Program Unggulan", "success", 1000);
+                AlertNotification("Berhasil", jenis === 'baru' ? "Berhasil menambahkan Program Prioritas Daerah" : "Berhasil Mengubah Program Prioritas Daerah", "success", 1000);
                 onClose();
                 onSuccess();
             } else {
@@ -115,28 +123,56 @@ export const ModalProgramUnggulan: React.FC<ModalProps> = ({ isOpen, onClose, da
             <div className="bg-white rounded-lg p-8 z-10 w-3/5 text-start">
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-max-[500px] py-2 border-b font-bold text-center">
-                        {jenis === 'baru' ? "Tambah" : "Edit"} Progam Unggulan
+                        {jenis === 'baru' ? "Tambah" : "Edit"} Program Prioritas Daerah
                     </div>
                     <div className="flex flex-col py-3">
                         <label
                             className="uppercase text-xs font-bold text-gray-700 my-2"
-                            htmlFor="nama_program_unggulan"
+                            htmlFor="kode_program_prioritas_daerah"
+                        >
+                            Kode Program Prioritas
+                        </label>
+                        <Controller
+                            name="kode_program_prioritas_daerah"
+                            control={control}
+                            rules={{ required: "kode program harus terisi" }}
+                            render={({ field }) => (
+                                <input
+                                    {...field}
+                                    className="border px-4 py-2 rounded-lg"
+                                    id="kode_program_prioritas_daerah"
+                                    type="text"
+                                    placeholder="masukkan kode program"
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                    }}
+                                />
+                            )}
+                        />
+                        {errors.kode_program_prioritas_daerah &&
+                            <p className="text-red-500 italic">{errors.kode_program_prioritas_daerah?.message}</p>
+                        }
+                    </div>
+                    <div className="flex flex-col py-3">
+                        <label
+                            className="uppercase text-xs font-bold text-gray-700 my-2"
+                            htmlFor="nama_program_prioritas_daerah"
                         >
                             {branding?.client === "KABUPATEN-MAHAKAM-ULU" ? 
                                 "Program Prioritas"
                             :
-                                "Program Hebat / Unggulan"
+                                "Program Prioritas Daerah"
                             }
                         </label>
                         <Controller
-                            name="nama_program_unggulan"
+                            name="nama_program_prioritas_daerah"
                             control={control}
                             rules={{ required: "program harus terisi" }}
                             render={({ field }) => (
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="nama_program_unggulan"
+                                    id="nama_program_prioritas_daerah"
                                     type="text"
                                     placeholder="masukkan program"
                                     onChange={(e) => {
@@ -145,8 +181,8 @@ export const ModalProgramUnggulan: React.FC<ModalProps> = ({ isOpen, onClose, da
                                 />
                             )}
                         />
-                        {errors.nama_program_unggulan &&
-                            <p className="text-red-500 italic">{errors.nama_program_unggulan?.message}</p>
+                        {errors.nama_program_prioritas_daerah &&
+                            <p className="text-red-500 italic">{errors.nama_program_prioritas_daerah?.message}</p>
                         }
                     </div>
                     <div className="flex flex-col py-3">
@@ -200,6 +236,25 @@ export const ModalProgramUnggulan: React.FC<ModalProps> = ({ isOpen, onClose, da
                                 />
                             )}
                         />
+                    </div>
+                    <div className="flex flex-row items-center py-3 gap-2">
+                        <Controller
+                            name="is_active"
+                            control={control}
+                            render={({ field }) => (
+                                <input
+                                    {...field}
+                                    type="checkbox"
+                                    id="is_active"
+                                    checked={field.value === "true"}
+                                    onChange={(e) => field.onChange(e.target.checked ? "true" : "false")}
+                                    className="w-4 h-4"
+                                />
+                            )}
+                        />
+                        <label htmlFor="is_active" className="text-sm font-bold text-gray-700">
+                            Aktif
+                        </label>
                     </div>
                     <ButtonSky type="submit" className="w-full my-3" disabled={Proses}>
                         {Proses ?

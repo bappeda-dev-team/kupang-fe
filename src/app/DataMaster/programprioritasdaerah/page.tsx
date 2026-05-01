@@ -1,8 +1,6 @@
 'use client'
 
 import { FiHome } from "react-icons/fi";
-import { TbCirclePlus } from "react-icons/tb";
-import { ButtonSky } from "@/components/global/Button";
 import { useState, useEffect } from "react";
 import { getToken, getPeriode, setCookie } from "@/components/lib/Cookie";
 import Select from "react-select";
@@ -14,11 +12,9 @@ interface Periode {
     id: number;
     tahun_awal: string;
     tahun_akhir: string;
-    jenis_periode: string;
-    tahun_list: string[];
 }
 
-const MasterProgramUnggulan = () => {
+const MasterProgramPrioritasDaerah = () => {
 
     const [Periode, setPeriode] = useState<Periode | null>(null);
     const [PeriodeOption, setPeriodeOption] = useState<Periode[]>([]);
@@ -34,9 +30,7 @@ const MasterProgramUnggulan = () => {
                 label: fetchPeriode.periode.label,
                 id: fetchPeriode.periode.value,
                 tahun_awal: fetchPeriode.periode.tahun_awal,
-                tahun_akhir: fetchPeriode.periode.tahun_akhir,
-                jenis_periode: fetchPeriode.periode.jenis_periode,
-                tahun_list: fetchPeriode.periode.tahun_list
+                tahun_akhir: fetchPeriode.periode.tahun_akhir
             }
             setPeriode(data);
         }
@@ -46,7 +40,7 @@ const MasterProgramUnggulan = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/periode/findall`, {
+            const response = await fetch(`${API_URL}/periodes`, {
                 headers: {
                     Authorization: `${token}`,
                     'Content-Type': 'application/json',
@@ -56,11 +50,9 @@ const MasterProgramUnggulan = () => {
             const hasil = result.data;
             const data = hasil.map((item: any) => ({
                 value: item.id,
-                label: `${item.tahun_awal} - ${item.tahun_akhir} (${item.jenis_periode})`,
+                label: `${item.tahun_awal} - ${item.tahun_akhir}`,
                 tahun_awal: item.tahun_awal,
                 tahun_akhir: item.tahun_akhir,
-                jenis_periode: item.jenis_periode,
-                tahun_list: item.tahun_list,
             }));
             setPeriodeOption(data);
         } catch (err) {
@@ -75,12 +67,12 @@ const MasterProgramUnggulan = () => {
             <div className="flex items-center">
                 <a href="/" className="mr-1"><FiHome /></a>
                 <p className="mr-1">/ Data Master</p>
-                <p className="mr-1">/ Program Unggulan</p>
+                <p className="mr-1">/ Program Prioritas Daerah</p>
             </div>
             <div className="mt-3 rounded-xl shadow-lg border">
                 <div className="flex items-center justify-between border-b px-5 py-5">
                     <div className="flex flex-wrap items-end">
-                        <h1 className="uppercase font-bold">Daftar Program Unggulan</h1>
+                        <h1 className="uppercase font-bold">Daftar Program Prioritas Daerah</h1>
                         <h1 className="uppercase font-bold ml-1">(Periode {Periode?.tahun_awal} - {Periode?.tahun_akhir})</h1>
                     </div>
                     <Select
@@ -122,4 +114,4 @@ const MasterProgramUnggulan = () => {
     )
 }
 
-export default MasterProgramUnggulan;
+export default MasterProgramPrioritasDaerah;

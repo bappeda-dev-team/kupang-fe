@@ -68,7 +68,7 @@ const IkuOpd = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/periode/findall`, {
+            const response = await fetch(`${API_URL}/periodes`, {
                 headers: {
                     Authorization: `${token}`,
                     'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ const IkuOpd = () => {
             const hasil = result.data;
             const data = hasil.map((item: any) => ({
                 value: item.id,
-                label: `${item.tahun_awal} - ${item.tahun_akhir} (${item.jenis_periode})`,
+                label: `${item.tahun_awal} - ${item.tahun_akhir}`,
                 tahun_awal: item.tahun_awal,
                 tahun_akhir: item.tahun_akhir,
                 jenis_periode: item.jenis_periode,
