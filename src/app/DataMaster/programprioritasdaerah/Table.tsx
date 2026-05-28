@@ -17,7 +17,7 @@ interface ProgramPrioritasDaerah {
     id: number;
     kode_program_prioritas_daerah: string;
     nama_program_prioritas_daerah: string;
-    is_active: string;
+    is_active: boolean;
     rencana_implementasi: string;
     keterangan: string;
     tahun_awal: string;
@@ -160,7 +160,7 @@ const Table: React.FC<Table> = ({ tahun_akhir, tahun_awal }) => {
                                     <td className="border-r border-b border-green-500 px-6 py-4 font-semibold">{item.nama_program_prioritas_daerah || "-"}</td>
                                     <td className="border-r border-b border-green-500 px-6 py-4">{item.rencana_implementasi || "-"}</td>
                                     <td className="border-r border-b border-green-500 px-6 py-4">
-                                        {item.is_active === 'true' ?
+                                        {item.is_active === true ?
                                             <p className="flex items-center gap-1">
                                                 <TbCircleCheck />
                                                 Digunakan

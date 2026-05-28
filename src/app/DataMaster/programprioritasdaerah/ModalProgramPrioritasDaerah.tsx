@@ -34,7 +34,7 @@ interface FormValue {
     keterangan: string,
     tahun_awal: string,
     tahun_akhir: string,
-    is_active: string,
+    is_active: boolean,
 }
 
 export const ModalProgramPrioritasDaerah: React.FC<ModalProps> = ({ isOpen, onClose, dataEdit, jenis, onSuccess, tahun_awal, tahun_akhir }) => {
@@ -46,7 +46,7 @@ export const ModalProgramPrioritasDaerah: React.FC<ModalProps> = ({ isOpen, onCl
             keterangan: dataEdit?.keterangan,
             tahun_awal: tahun_awal,
             tahun_akhir: tahun_akhir,
-            is_active: "true",
+            is_active: true,
         },
     });
 
@@ -62,7 +62,7 @@ export const ModalProgramPrioritasDaerah: React.FC<ModalProps> = ({ isOpen, onCl
             keterangan: "",
             tahun_awal: "",
             tahun_akhir: "",
-            is_active: "true",
+            is_active: true,
         });
         onClose();
     };
@@ -243,11 +243,12 @@ export const ModalProgramPrioritasDaerah: React.FC<ModalProps> = ({ isOpen, onCl
                             control={control}
                             render={({ field }) => (
                                 <input
-                                    {...field}
                                     type="checkbox"
                                     id="is_active"
-                                    checked={field.value === "true"}
-                                    onChange={(e) => field.onChange(e.target.checked ? "true" : "false")}
+                                    name={field.name}
+                                    ref={field.ref}
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
                                     className="w-4 h-4"
                                 />
                             )}
