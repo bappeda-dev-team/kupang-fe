@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { getToken } from "@/components/lib/Cookie";
 
 interface urusan {
-    id: string;
+    id: number;
     nama_urusan: string;
     kode_urusan: string;
 }
@@ -25,27 +25,31 @@ const Table = () => {
         const fetchUrusan = async() => {
             setLoading(true)
             try{
-                const response = await fetch(`${API_URL}/urusan/findall`, {
+                const response = await fetch(`${API_URL}/urusans`, {
                     headers: {
                       Authorization: `${token}`,
                       'Content-Type': 'application/json',
                     },
                 });
-                const result = await response.json();
-                const data = result.data;
-                if(data == null){
-                    setDataNull(true);
-                    setUrusan([]);
-                } else if(data.code == 500){
+                if (response.status === 401) {
                     setError(true);
-                    setUrusan([]);
-                } else if(result.code === 401){
-                    setError(true);
-                } else {
-                    setError(false);
                     setDataNull(false);
-                    setUrusan(data);
+                    setUrusan([]);
+                    return;
                 }
+
+                const result = await response.json();
+                const data = Array.isArray(result?.data) ? result.data : [];
+
+                if (!response.ok) {
+                    setError(true);
+                    setDataNull(false);
+                    setUrusan([]);
+                    return;
+                }
+
+                setError(false);
+                setDataNull(data.length === 0);
                 setUrusan(data);
             } catch(err){
                 setError(true);
@@ -60,7 +64,7 @@ const Table = () => {
     const hapusUrusan = async(id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try{
-            const response = await fetch(`${API_URL}/urusan/delete/${id}`, {
+            const response = await fetch(`${API_URL}/urusans/${id}`, {
                 method: "DELETE",
                 headers: {
                   Authorization: `${token}`,

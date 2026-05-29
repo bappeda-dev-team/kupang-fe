@@ -39,7 +39,7 @@ export const FormUrusan = () => {
         };
         // console.log(formData);
         try{
-            const response = await fetch(`${API_URL}/urusan/create`, {
+            const response = await fetch(`${API_URL}/urusans`, {
                 method: "POST",
                 headers: {
                   Authorization: `${token}`,
@@ -118,7 +118,7 @@ export const FormUrusan = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="tahun"
+                                    id="kode_urusan"
                                     type="text"
                                     placeholder="masukkan Kode Urusan"
                                     value={field.value || KodeUrusan}
@@ -169,33 +169,41 @@ export const FormEditUrusan = () => {
     const router = useRouter();
     const token = getToken();
 
+    const urusanId = typeof id === 'string' ? id : (Array.isArray(id) ? id[0] : '');
+
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const fetchIdUrusan = async() => {
             setLoading(true);
             try{
-                const response = await fetch(`${API_URL}/urusan/detail/${id}`, {
+                const response = await fetch(`${API_URL}/urusans/${urusanId}`, {
                     headers: {
                       Authorization: `${token}`,
                       'Content-Type': 'application/json',
                     },
                 });
+                if (response.status === 404) {
+                    setIdNull(true);
+                    return;
+                }
                 if(!response.ok){
                     throw new Error('terdapat kesalahan di koneksi backend');
                 }
+
                 const result = await response.json();
-                if(result.code == 500){
+                const data = result?.data;
+                if (!data) {
                     setIdNull(true);
-                } else {
-                    const data = result.data;
-                    if(data.nama_urusan){
-                        setNamaUrusan(data.nama_urusan);
-                        reset((prev) => ({ ...prev, nama_urusan: data.nama_urusan }))
-                    }
-                    if(data.kode_urusan){
-                        setKodeUrusan(data.kode_urusan);
-                        reset((prev) => ({ ...prev, kode_urusan: data.kode_urusan }))
-                    }
+                    return;
+                }
+
+                if(data.nama_urusan){
+                    setNamaUrusan(data.nama_urusan);
+                    reset((prev) => ({ ...prev, nama_urusan: data.nama_urusan }))
+                }
+                if(data.kode_urusan){
+                    setKodeUrusan(data.kode_urusan);
+                    reset((prev) => ({ ...prev, kode_urusan: data.kode_urusan }))
                 }
             } catch(err) {
                 setError('gagal mendapatkan data, periksa koneksi internet atau database server')
@@ -204,18 +212,23 @@ export const FormEditUrusan = () => {
             }
         }
         fetchIdUrusan();
-    },[id, reset, token]);
+    },[urusanId, reset, token]);
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+      const numericId = Number(urusanId);
+      const payloadId: any = Number.isNaN(numericId) ? urusanId : numericId;
+
       const formData = {
           //key : value
+          id: payloadId,
           nama_urusan : data.nama_urusan,
           kode_urusan : data.kode_urusan,
       };
         //console.log(formData);
         try{
-            const response = await fetch(`${API_URL}/urusan/update/${id}`, {
+            const response = await fetch(`${API_URL}/urusans/${urusanId}`, {
                 method: "PUT",
                 headers: {
                   Authorization: `${token}`,
@@ -317,7 +330,7 @@ export const FormEditUrusan = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="tahun"
+                                    id="kode_urusan"
                                     type="text"
                                     placeholder="masukkan Kode Urusan"
                                     value={field.value || KodeUrusan}
