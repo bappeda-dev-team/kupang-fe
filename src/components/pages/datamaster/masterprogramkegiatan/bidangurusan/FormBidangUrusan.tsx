@@ -39,7 +39,7 @@ export const FormBidangUrusan = () => {
         };
         // console.log(formData);
         try{
-            const response = await fetch(`${API_URL}/bidang_urusan/create`, {
+            const response = await fetch(`${API_URL}/bidang-urusans`, {
                 method: "POST",
                 headers: {
                   Authorization: `${token}`,
@@ -174,7 +174,7 @@ export const FormEditBidangUrusan = () => {
         const fetchIdOpd = async() => {
             setLoading(true);
             try{
-                const response = await fetch(`${API_URL}/bidang_urusan/detail/${id}`, {
+                const response = await fetch(`${API_URL}/bidang-urusans/${id}`, {
                     headers: {
                       Authorization: `${token}`,
                       'Content-Type': 'application/json',
@@ -215,7 +215,7 @@ export const FormEditBidangUrusan = () => {
       };
     //   console.log(formData);
         try{
-            const response = await fetch(`${API_URL}/bidang_urusan/update/${id}`, {
+            const response = await fetch(`${API_URL}/bidang-urusans/${id}`, {
                 method: "PUT",
                 headers: {
                   Authorization: `${token}`,

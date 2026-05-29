@@ -25,7 +25,7 @@ const Table = () => {
         const fetchOpd = async() => {
             setLoading(true)
             try{
-                const response = await fetch(`${API_URL}/bidang_urusan/findall`, {
+                const response = await fetch(`${API_URL}/bidang-urusans`, {
                     headers: {
                       Authorization: `${token}`,
                       'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ const Table = () => {
     const hapusBidangUrusan = async(id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try{
-            const response = await fetch(`${API_URL}/bidang_urusan/delete/${id}`, {
+            const response = await fetch(`${API_URL}/bidang-urusans/${id}`, {
                 method: "DELETE",
                 headers: {
                   Authorization: `${token}`,
