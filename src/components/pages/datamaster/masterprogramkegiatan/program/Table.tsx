@@ -5,53 +5,68 @@ import { AlertNotification, AlertQuestion } from "@/components/global/Alert";
 import { LoadingClip } from "@/components/global/Loading";
 import { useState, useEffect } from "react";
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
+import { TahunNull } from "@/components/global/OpdTahunNull";
 
 interface program {
     id: string;
     kode_program: string;
     nama_program: string;
-    kode_opd: kode_opd;
+    kode_opd: string;
     tahun: string;
     is_active: boolean;
 }
 
-interface kode_opd {
-    kode_opd: string;
-    nama_opd: string;
-}
-
 const Table = () => {
 
+    const { branding } = useBrandingContext();
     const [Program, setProgram] = useState<program[]>([]);
     const [Error, setError] = useState<boolean | null>(null);
     const [Loading, setLoading] = useState<boolean | null>(null);
     const [DataNull, setDataNull] = useState<boolean | null>(null);
+    const [OpdMap, setOpdMap] = useState<Record<string, string>>({});
     const token = getToken();
 
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const fetchOpd = async() => {
+        const fetchData = async() => {
             setLoading(true)
             try{
-                const response = await fetch(`${API_URL}/program_kegiatan/findall`, {
-                    headers: {
-                      Authorization: `${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                });
-                const result = await response.json();
-                const data = result.data;
-                if(data == null){
+                const [programRes, opdRes] = await Promise.all([
+                    fetch(`${API_URL}/programs`, {
+                        headers: {
+                            Authorization: `${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }),
+                    fetch(`${API_URL}/opds`, {
+                        headers: {
+                            Authorization: `${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }),
+                ]);
+                const programResult = await programRes.json();
+                const opdResult = await opdRes.json();
+                const programData = programResult.data;
+                if(programData == null){
                     setDataNull(true);
                     setProgram([]);
-                } else if(result.code === 401){
+                } else if(programResult.code === 401){
                     setError(true);
                 } else {
                     setError(false);
                     setDataNull(false);
-                    setProgram(data);
+                    setProgram(programData);
                 }
-                setProgram(data);
+                setProgram(programData);
+                if(opdResult.data){
+                    const map: Record<string, string> = {};
+                    opdResult.data.forEach((item: any) => {
+                        map[item.kode_opd] = item.nama_opd;
+                    });
+                    setOpdMap(map);
+                }
             } catch(err){
                 setError(true);
                 console.error(err)
@@ -59,13 +74,13 @@ const Table = () => {
                 setLoading(false);
             }
         }
-        fetchOpd();
+        fetchData();
     }, [token]);
 
     const hapusProgram = async(id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try{
-            const response = await fetch(`${API_URL}/program_kegiatan/delete/${id}`, {
+            const response = await fetch(`${API_URL}/programs/${id}`, {
                 method: "DELETE",
                 headers: {
                   Authorization: `${token}`,
@@ -81,6 +96,10 @@ const Table = () => {
             AlertNotification("Gagal", "cek koneksi internet atau database server", "error", 2000);
         }
     };
+
+    if (branding?.tahun?.value == undefined) {
+        return <TahunNull />;
+    }
 
     if(Loading){
         return (    
@@ -123,8 +142,8 @@ const Table = () => {
                             <td className="border-r border-b px-6 py-4">{index +1}</td>
                             <td className="border-r border-b px-6 py-4">{data.nama_program ? data.nama_program : "-"}</td>
                             <td className="border-r border-b px-6 py-4">{data.kode_program ? data.kode_program : "-"}</td>
-                            <td className="border-r border-b px-6 py-4">{data.kode_opd ? data.kode_opd.nama_opd : "-"}</td>
-                            <td className="border-r border-b px-6 py-4">{data.kode_opd ? data.kode_opd.kode_opd : "-"}</td>
+                            <td className="border-r border-b px-6 py-4">{data.kode_opd ? (OpdMap[data.kode_opd] || data.kode_opd) : "-"}</td>
+                            <td className="border-r border-b px-6 py-4">{data.kode_opd ? data.kode_opd : "-"}</td>
                             <td className="border-r border-b px-6 py-4">
                                 <div className="flex flex-col jutify-center items-center gap-2">
                                     <ButtonGreen className="w-full" halaman_url={`/DataMaster/masterprogramkegiatan/program/${data.id}`}>Edit</ButtonGreen>

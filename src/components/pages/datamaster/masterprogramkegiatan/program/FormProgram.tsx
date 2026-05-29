@@ -8,6 +8,7 @@ import { AlertNotification } from "@/components/global/Alert";
 import { useParams, useRouter } from "next/navigation";
 import Select from "react-select";
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
 
 interface OptionTypeString {
     value: string;
@@ -34,12 +35,13 @@ export const FormProgram = () => {
     const [IsLoading, setIsLoading] = useState<boolean>(false);
     const router = useRouter();
     const token = getToken();
+    const { branding } = useBrandingContext();
 
     const fetchOpd = async() => {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       setIsLoading(true);
       try{ 
-        const response = await fetch(`${API_URL}/opd/findall`,{
+        const response = await fetch(`${API_URL}/opds`,{
           method: 'GET',
           headers: {
             Authorization: `${token}`,
@@ -69,10 +71,11 @@ export const FormProgram = () => {
           nama_program : data.nama_program,
           kode_program : data.kode_program,
           kode_opd : data.kode_opd?.value,
+          tahun : String(branding?.tahun?.value ?? ''),
       };
       // console.log(formData);
       try{
-          const response = await fetch(`${API_URL}/program_kegiatan/create`, {
+          const response = await fetch(`${API_URL}/programs`, {
               method: "POST",
               headers: {
                 Authorization: `${token}`,
@@ -151,7 +154,7 @@ export const FormProgram = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="tahun"
+                                    id="kode_program"
                                     type="text"
                                     placeholder="masukkan Kode Program"
                                     value={field.value || KodeProgram}
@@ -255,22 +258,40 @@ export const FormEditProgram = () => {
     const {id} = useParams();
     const router = useRouter();
     const token = getToken();
+    const { branding } = useBrandingContext();
 
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        const fetchProgram = async() => {
+        const fetchData = async() => {
             setLoading(true);
             try{
-                const response = await fetch(`${API_URL}/program_kegiatan/detail/${id}`, {
-                    headers: {
-                      Authorization: `${token}`,
-                      'Content-Type': 'application/json',
-                    },
-                });
-                if(!response.ok){
+                const [programRes, opdRes] = await Promise.all([
+                    fetch(`${API_URL}/programs/${id}`, {
+                        headers: {
+                            Authorization: `${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }),
+                    fetch(`${API_URL}/opds`, {
+                        headers: {
+                            Authorization: `${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }),
+                ]);
+                if(!programRes.ok){
                     throw new Error('terdapat kesalahan di koneksi backend');
                 }
-                const result = await response.json();
+                const result = await programRes.json();
+                const opdResult = await opdRes.json();
+                let opdOptions: OptionTypeString[] = [];
+                if(opdResult.data){
+                    opdOptions = opdResult.data.map((item: any) => ({
+                        value: item.kode_opd,
+                        label: item.nama_opd,
+                    }));
+                    setOpdOption(opdOptions);
+                }
                 if(result.code == 500){
                     setIdNull(true);
                 } else {
@@ -284,10 +305,10 @@ export const FormEditProgram = () => {
                         reset((prev) => ({ ...prev, kode_program: data.kode_program }))
                     }
                     if(data.kode_opd){
-                        const opd = {
-                            value: data.kode_opd.kode_opd,
-                            label: data.kode_opd.nama_opd
-                        }
+                        const kodeOpdStr = typeof data.kode_opd === 'object' ? data.kode_opd.kode_opd : data.kode_opd;
+                        const namaOpdStr = typeof data.kode_opd === 'object' ? data.kode_opd.nama_opd : '';
+                        const foundOpd = opdOptions.find(o => o.value === kodeOpdStr);
+                        const opd = foundOpd || { value: kodeOpdStr, label: namaOpdStr || kodeOpdStr };
                         setKodeOpd(opd);
                         reset((prev) => ({ ...prev, kode_opd: opd }))
                     }
@@ -298,14 +319,14 @@ export const FormEditProgram = () => {
                 setLoading(false);
             }
         }
-        fetchProgram();
+        fetchData();
     },[id, reset, token]);
 
     const fetchOpd = async() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try{ 
-          const response = await fetch(`${API_URL}/opd/findall`,{
+          const response = await fetch(`${API_URL}/opds`,{
             method: 'GET',
             headers: {
               Authorization: `${token}`,
@@ -335,10 +356,11 @@ export const FormEditProgram = () => {
           nama_program : data.nama_program,
           kode_program : data.kode_program,
           kode_opd : data.kode_opd?.value,
+          tahun : String(branding?.tahun?.value ?? ''),
       };
         //   console.log(formData);
         try{
-            const response = await fetch(`${API_URL}/program_kegiatan/update/${id}`, {
+            const response = await fetch(`${API_URL}/programs/${id}`, {
                 method: "PUT",
                 headers: {
                   Authorization: `${token}`,
@@ -440,7 +462,7 @@ export const FormEditProgram = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="tahun"
+                                    id="kode_program"
                                     type="text"
                                     placeholder="masukkan Kode Program"
                                     value={field.value || KodeProgram}
