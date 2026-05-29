@@ -5,15 +5,19 @@ import { AlertNotification, AlertQuestion } from "@/components/global/Alert";
 import { LoadingClip } from "@/components/global/Loading";
 import { useState, useEffect } from "react";
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
+import { TahunNull } from "@/components/global/OpdTahunNull";
 
 interface urusan {
     id: number;
     nama_urusan: string;
     kode_urusan: string;
+    tahun: number;
 }
 
 const Table = () => {
 
+    const { branding } = useBrandingContext();
     const [Urusan, setUrusan] = useState<urusan[]>([]);
     const [Error, setError] = useState<boolean | null>(null);
     const [Loading, setLoading] = useState<boolean | null>(null);
@@ -80,6 +84,10 @@ const Table = () => {
             AlertNotification("Gagal", "cek koneksi internet atau database server", "error", 2000);
         }
     };
+
+    if (branding?.tahun?.value == undefined) {
+        return <TahunNull />;
+    }
 
     if(Loading){
         return (    

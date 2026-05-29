@@ -7,6 +7,7 @@ import { LoadingClip } from "@/components/global/Loading";
 import { AlertNotification } from "@/components/global/Alert";
 import { useRouter, useParams } from "next/navigation";
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
 
 interface OptionTypeString {
     value: string;
@@ -29,6 +30,7 @@ export const FormUrusan = () => {
     const [KodeUrusan, setKodeUrusan] = useState<string>('');
     const router = useRouter();
     const token = getToken();
+    const { branding } = useBrandingContext();
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -36,6 +38,7 @@ export const FormUrusan = () => {
             //key : value
             nama_urusan : data.nama_urusan,
             kode_urusan : data.kode_urusan,
+            tahun : String(branding?.tahun?.value ?? ''),
         };
         // console.log(formData);
         try{
@@ -168,6 +171,7 @@ export const FormEditUrusan = () => {
     const {id} = useParams();
     const router = useRouter();
     const token = getToken();
+    const { branding } = useBrandingContext();
 
     const urusanId = typeof id === 'string' ? id : (Array.isArray(id) ? id[0] : '');
 
@@ -225,6 +229,7 @@ export const FormEditUrusan = () => {
           id: payloadId,
           nama_urusan : data.nama_urusan,
           kode_urusan : data.kode_urusan,
+          tahun : String(branding?.tahun?.value ?? ''),
       };
         //console.log(formData);
         try{

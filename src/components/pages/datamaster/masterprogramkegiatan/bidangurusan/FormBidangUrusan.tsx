@@ -7,6 +7,7 @@ import { LoadingClip } from "@/components/global/Loading";
 import { AlertNotification } from "@/components/global/Alert";
 import { useRouter, useParams } from "next/navigation";
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
 
 interface OptionTypeString {
     value: string;
@@ -29,6 +30,7 @@ export const FormBidangUrusan = () => {
     const [KodeBidangUrusan, setKodeBidangUrusan] = useState<string>('');
     const router = useRouter();
     const token = getToken();
+    const { branding } = useBrandingContext();
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -36,6 +38,7 @@ export const FormBidangUrusan = () => {
             //key : value
             nama_bidang_urusan : data.nama_bidang_urusan,
             kode_bidang_urusan : data.kode_bidang_urusan,
+            tahun : String(branding?.tahun?.value ?? ''),
         };
         // console.log(formData);
         try{
@@ -118,7 +121,7 @@ export const FormBidangUrusan = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="tahun"
+                                    id="kode_bidang_urusan"
                                     type="text"
                                     placeholder="masukkan Kode Bidang Urusan"
                                     value={field.value || KodeBidangUrusan}
@@ -168,6 +171,7 @@ export const FormEditBidangUrusan = () => {
     const router = useRouter();
     const {id} = useParams();
     const token = getToken();
+    const { branding } = useBrandingContext();
 
     useEffect(() => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -212,6 +216,7 @@ export const FormEditBidangUrusan = () => {
           //key : value
           nama_bidang_urusan : data.nama_bidang_urusan,
           kode_bidang_urusan : data.kode_bidang_urusan,
+          tahun : String(branding?.tahun?.value ?? ''),
       };
     //   console.log(formData);
         try{
@@ -317,7 +322,7 @@ export const FormEditBidangUrusan = () => {
                                 <input
                                     {...field}
                                     className="border px-4 py-2 rounded-lg"
-                                    id="tahun"
+                                    id="kode_bidang_urusan"
                                     type="text"
                                     placeholder="masukkan Kode Bidang Urusan"
                                     value={field.value || KodeBidangUrusan}
