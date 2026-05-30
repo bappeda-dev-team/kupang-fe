@@ -38,6 +38,10 @@ export const FormKegiatan = () => {
     const { branding } = useBrandingContext();
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
+        if (!branding?.tahun?.value) {
+            AlertNotification("Tahun Belum Dipilih", "Silahkan pilih tahun terlebih dahulu di menu header aktivasi", "warning", 2000);
+            return;
+        }
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const formData = {
             //key : value
@@ -350,6 +354,10 @@ export const FormEditKegiatan = () => {
     };
 
     const onSubmit: SubmitHandler<FormValue> = async (data) => {
+        if (!branding?.tahun?.value) {
+            AlertNotification("Tahun Belum Dipilih", "Silahkan pilih tahun terlebih dahulu di menu header aktivasi", "warning", 2000);
+            return;
+        }
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       const formData = {
           //key : value

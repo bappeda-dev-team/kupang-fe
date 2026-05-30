@@ -83,6 +83,10 @@ export const ModalSubKegiatan: React.FC<ModalProps> = ({ isOpen, onClose, id, me
     }, [id, token, reset, metode, isOpen]);
 
     const onSubmit: SubmitHandler<FormValue> = async () => {
+        if (!branding?.tahun?.value) {
+            AlertNotification("Tahun Belum Dipilih", "Silahkan pilih tahun terlebih dahulu di menu header aktivasi", "warning", 2000);
+            return;
+        }
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         const formDataNew = {
             //key : value

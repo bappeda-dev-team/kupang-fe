@@ -5,6 +5,8 @@ import React, { useState, useEffect } from "react";
 import { AlertNotification, AlertQuestion } from "@/components/global/Alert";
 import { LoadingClip } from "@/components/global/Loading";
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
+import { TahunNull } from "@/components/global/OpdTahunNull";
 import { TbPencil, TbTrash, TbCirclePlus } from "react-icons/tb";
 import { ModalSubKegiatan } from "./ModalSubKegiatan";
 
@@ -16,6 +18,7 @@ interface SubKegiatan {
 
 const Table = () => {
 
+    const { branding } = useBrandingContext();
     const [SubKegiatan, setSubKegiatan] = useState<SubKegiatan[]>([]);
     const [Error, setError] = useState<boolean | null>(null);
     const [Loading, setLoading] = useState<boolean | null>(null);
@@ -92,6 +95,10 @@ const Table = () => {
             console.error(err)
         }
     };
+
+    if (branding?.tahun?.value == undefined) {
+        return <TahunNull />;
+    }
 
     if (Loading) {
         return (
