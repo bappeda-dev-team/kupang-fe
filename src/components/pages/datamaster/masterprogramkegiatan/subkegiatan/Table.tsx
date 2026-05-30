@@ -11,7 +11,7 @@ import { ModalSubKegiatan } from "./ModalSubKegiatan";
 interface SubKegiatan {
     id: string;
     kode_subkegiatan: string;
-    nama_sub_kegiatan: string;
+    nama_subkegiatan: string;
 }
 
 const Table = () => {
@@ -43,14 +43,15 @@ const Table = () => {
         const fetchSubKegiatan = async () => {
             setLoading(true)
             try {
-                const response = await fetch(`${API_URL}/sub_kegiatan/findall`, {
+                const response = await fetch(`${API_URL}/subkegiatans`, {
+                    cache: 'no-store',
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
                 const result = await response.json();
-                const data = result.sub_kegiatan;
+                const data = result.data;
                 if (data == null) {
                     setDataNull(true);
                     setSubKegiatan([]);
@@ -61,7 +62,6 @@ const Table = () => {
                     setDataNull(false);
                     setSubKegiatan(data);
                 }
-                setSubKegiatan(data);
             } catch (err) {
                 setError(true);
                 console.error(err)
@@ -75,7 +75,7 @@ const Table = () => {
     const hapusSubKegiatan = async (id: any) => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         try {
-            const response = await fetch(`${API_URL}/sub_kegiatan/delete/${id}`, {
+            const response = await fetch(`${API_URL}/subkegiatans/${id}`, {
                 method: "DELETE",
                 headers: {
                     Authorization: `${token}`,
@@ -143,7 +143,7 @@ const Table = () => {
                                             {item.kode_subkegiatan || "-"}
                                         </td>
                                         <td className="border-r border-b px-6 py-4">
-                                            {item.nama_sub_kegiatan || "-"}
+                                            {item.nama_subkegiatan || "-"}
                                         </td>
                                         <td className="border-r border-b px-6 py-4">
                                             <div className="flex flex-col justify-center items-center gap-2">

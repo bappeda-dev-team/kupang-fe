@@ -8,6 +8,7 @@ import { AlertNotification } from "@/components/global/Alert";
 import { useParams, useRouter } from "next/navigation";
 import Select from 'react-select';
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
 
 interface OptionTypeString {
     value: string;
@@ -16,7 +17,6 @@ interface OptionTypeString {
 interface FormValue {
     id: string;
     nama_subkegiatan: string;
-    tahun: OptionTypeString;
     kode_opd: OptionTypeString;
     indikator: indikator[];
 }
@@ -38,27 +38,12 @@ export const FormSubKegiatan = () => {
         formState: { errors },
     } = useForm<FormValue>();
     const [NamaSubKegiatan, setNamaSubKegiatan] = useState<string>('');
-    const [Tahun, setTahun] = useState<OptionTypeString | null>(null);
     const [KodeOpd, setKodeOpd] = useState<OptionTypeString | null>(null);
     const [OpdOption, setOpdOption] = useState<OptionTypeString[]>([]);
     const [IsLoading, setIsLoading] = useState<boolean>(false);
     const router = useRouter();
     const token = getToken();
-
-    const TahunOption = [
-        { label: "Tahun 2019", value: "2019" },
-        { label: "Tahun 2020", value: "2020" },
-        { label: "Tahun 2021", value: "2021" },
-        { label: "Tahun 2022", value: "2022" },
-        { label: "Tahun 2023", value: "2023" },
-        { label: "Tahun 2024", value: "2024" },
-        { label: "Tahun 2025", value: "2025" },
-        { label: "Tahun 2026", value: "2026" },
-        { label: "Tahun 2027", value: "2027" },
-        { label: "Tahun 2028", value: "2028" },
-        { label: "Tahun 2029", value: "2029" },
-        { label: "Tahun 2030", value: "2030" },
-    ];
+    const { branding } = useBrandingContext();
 
     const { fields, append, remove, replace } = useFieldArray({
         control,
@@ -69,7 +54,7 @@ export const FormSubKegiatan = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+            const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -97,7 +82,7 @@ export const FormSubKegiatan = () => {
         const formData = {
             //key : value
             nama_subkegiatan: data.nama_subkegiatan,
-            tahun: data.tahun?.value,
+            tahun: String(branding?.tahun?.value ?? ''),
             kode_opd: data.kode_opd?.value,
             ...(data.indikator && {
                 indikator: data.indikator.map((ind) => ({
@@ -111,7 +96,7 @@ export const FormSubKegiatan = () => {
         };
         // console.log(formData);
         try {
-            const response = await fetch(`${API_URL}/sub_kegiatan/create`, {
+            const response = await fetch(`${API_URL}/subkegiatans`, {
                 method: "POST",
                 headers: {
                     Authorization: `${token}`,
@@ -124,7 +109,7 @@ export const FormSubKegiatan = () => {
                 AlertNotification("Berhasil", "Berhasil menambahkan data master sub kegiatan", "success", 1000);
                 router.push("/DataMaster/masterprogramkegiatan/subkegiatan");
             } else {
-                AlertNotification("Gagal", `${result.sub_kegiatan}`, "error", 3000);
+                AlertNotification("Gagal", `${result.subkegiatan}`, "error", 3000);
                 console.log(result);
             }
         } catch (err) {
@@ -135,7 +120,7 @@ export const FormSubKegiatan = () => {
     return (
         <>
             <div className="border p-5 rounded-xl shadow-xl">
-                <h1 className="uppercase font-bold">Form Tambah Sub Kegiatan :</h1>
+                    <h1 className="uppercase font-bold">Form Tambah Sub Kegiatan :</h1>
                 <form
                     onSubmit={handleSubmit(onSubmit)}
                     className="flex flex-col mx-5 py-5"
@@ -222,49 +207,6 @@ export const FormSubKegiatan = () => {
                                         </h1>
                                         :
                                         <h1 className="text-slate-300 text-xs">*Perangkat Daerah Harus Terisi</h1>
-                                    }
-                                </>
-                            )}
-                        />
-                    </div>
-                    <div className="flex flex-col py-3">
-                        <label
-                            className="uppercase text-xs font-bold text-gray-700 my-2"
-                            htmlFor="tahun"
-                        >
-                            Tahun:
-                        </label>
-                        <Controller
-                            name="tahun"
-                            control={control}
-                            rules={{ required: "Tahun Harus Terisi" }}
-                            render={({ field }) => (
-                                <>
-                                    <Select
-                                        {...field}
-                                        placeholder="Masukkan Tahun"
-                                        value={Tahun}
-                                        options={TahunOption}
-                                        isLoading={IsLoading}
-                                        isSearchable
-                                        isClearable
-                                        onChange={(option) => {
-                                            field.onChange(option);
-                                            setTahun(option);
-                                        }}
-                                        styles={{
-                                            control: (baseStyles) => ({
-                                                ...baseStyles,
-                                                borderRadius: '8px',
-                                            })
-                                        }}
-                                    />
-                                    {errors.tahun ?
-                                        <h1 className="text-red-500">
-                                            {errors.tahun.message}
-                                        </h1>
-                                        :
-                                        <h1 className="text-slate-300 text-xs">*Tahun Harus Terisi</h1>
                                     }
                                 </>
                             )}
@@ -372,7 +314,6 @@ export const FormEditSubKegiatan = () => {
         formState: { errors },
     } = useForm<FormValue>();
     const [NamaSubKegiatan, setNamaSubKegiatan] = useState<string>('');
-    const [Tahun, setTahun] = useState<OptionTypeString | null>(null);
     const [KodeOpd, setKodeOpd] = useState<OptionTypeString | null>(null);
     const [OpdOption, setOpdOption] = useState<OptionTypeString[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -382,21 +323,7 @@ export const FormEditSubKegiatan = () => {
     const router = useRouter();
     const { id } = useParams();
     const token = getToken();
-
-    const TahunOption = [
-        { label: "Tahun 2019", value: "2019" },
-        { label: "Tahun 2020", value: "2020" },
-        { label: "Tahun 2021", value: "2021" },
-        { label: "Tahun 2022", value: "2022" },
-        { label: "Tahun 2023", value: "2023" },
-        { label: "Tahun 2024", value: "2024" },
-        { label: "Tahun 2025", value: "2025" },
-        { label: "Tahun 2026", value: "2026" },
-        { label: "Tahun 2027", value: "2027" },
-        { label: "Tahun 2028", value: "2028" },
-        { label: "Tahun 2029", value: "2029" },
-        { label: "Tahun 2030", value: "2030" },
-    ];
+    const { branding } = useBrandingContext();
 
     const { fields, append, remove, replace } = useFieldArray({
         control,
@@ -408,7 +335,7 @@ export const FormEditSubKegiatan = () => {
         const fetchIdSubKegiatan = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`${API_URL}/sub_kegiatan/detail/${id}`, {
+                const response = await fetch(`${API_URL}/subkegiatans/${id}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
@@ -421,10 +348,10 @@ export const FormEditSubKegiatan = () => {
                 if (result.code == 500) {
                     setIdNull(true);
                 } else {
-                    const data = result.sub_kegiatan;
-                    if (data.nama_sub_kegiatan) {
-                        setNamaSubKegiatan(data.nama_sub_kegiatan);
-                        reset((prev) => ({ ...prev, nama_subkegiatan: data.nama_sub_kegiatan }))
+                    const data = result.subkegiatan;
+                    if (data.nama_subkegiatan) {
+                        setNamaSubKegiatan(data.nama_subkegiatan);
+                        reset((prev) => ({ ...prev, nama_subkegiatan: data.nama_subkegiatan }))
                     }
                     if (data.kode_opd && data.nama_opd) {
                         const opd = {
@@ -434,25 +361,13 @@ export const FormEditSubKegiatan = () => {
                         setKodeOpd(opd);
                         reset((prev) => ({ ...prev, kode_opd: opd }))
                     }
-                    if (data.tahun) {
-                        const tahun = {
-                            value: data.tahun,
-                            label: data.tahun,
-                        }
-                        setTahun(tahun);
-                        reset((prev) => ({ ...prev, tahun: tahun }))
-                    }
                     // Pengecekan apakah indikator ada sebelum di-map
                     if (data?.indikator && data.indikator.length > 0) {
                         reset({
-                            nama_subkegiatan: data.nama_sub_kegiatan,
+                            nama_subkegiatan: data.nama_subkegiatan,
                             kode_opd: {
                                 value: data.kode_opd,
                                 label: data.nama_opd
-                            },
-                            tahun: {
-                                value: data.tahun,
-                                label: data.tahun
                             },
                             indikator: data.indikator.map((item: indikator) => ({
                                 indikator: item.nama_indikator,
@@ -485,7 +400,7 @@ export const FormEditSubKegiatan = () => {
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_URL}/opd/findall`, {
+            const response = await fetch(`${API_URL}/opds`, {
                 method: 'GET',
                 headers: {
                     Authorization: `${token}`,
@@ -513,7 +428,7 @@ export const FormEditSubKegiatan = () => {
         const formData = {
             //key : value
             nama_subkegiatan: data.nama_subkegiatan,
-            tahun: data.tahun?.value,
+            tahun: String(branding?.tahun?.value ?? ''),
             kode_opd: data.kode_opd?.value,
             ...(data.indikator && {
                 indikator: data.indikator.map((ind) => ({
@@ -527,7 +442,7 @@ export const FormEditSubKegiatan = () => {
         };
         // console.log(formData);
         try {
-            const response = await fetch(`${API_URL}/sub_kegiatan/update/${id}`, {
+            const response = await fetch(`${API_URL}/subkegiatans/${id}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `${token}`,
@@ -540,7 +455,7 @@ export const FormEditSubKegiatan = () => {
                 AlertNotification("Berhasil", "Berhasil edit data master sub kegiatan", "success", 1000);
                 router.push("/DataMaster/masterprogramkegiatan/subkegiatan");
             } else {
-                AlertNotification("Gagal", `${result.sub_kegiatan}`, "error", 3000);
+                AlertNotification("Gagal", `${result.subkegiatan}`, "error", 3000);
                 console.log(result);
             }
         } catch (err) {
@@ -661,49 +576,6 @@ export const FormEditSubKegiatan = () => {
                                         </h1>
                                         :
                                         <h1 className="text-slate-300 text-xs">*Perangkat Daerah Harus Terisi</h1>
-                                    }
-                                </>
-                            )}
-                        />
-                    </div>
-                    <div className="flex flex-col py-3">
-                        <label
-                            className="uppercase text-xs font-bold text-gray-700 my-2"
-                            htmlFor="tahun"
-                        >
-                            Tahun:
-                        </label>
-                        <Controller
-                            name="tahun"
-                            control={control}
-                            rules={{ required: "Tahun Harus Terisi" }}
-                            render={({ field }) => (
-                                <>
-                                    <Select
-                                        {...field}
-                                        placeholder="Masukkan Tahun"
-                                        value={Tahun}
-                                        options={TahunOption}
-                                        isLoading={IsLoading}
-                                        isSearchable
-                                        isClearable
-                                        onChange={(option) => {
-                                            field.onChange(option);
-                                            setTahun(option);
-                                        }}
-                                        styles={{
-                                            control: (baseStyles) => ({
-                                                ...baseStyles,
-                                                borderRadius: '8px',
-                                            })
-                                        }}
-                                    />
-                                    {errors.tahun ?
-                                        <h1 className="text-red-500">
-                                            {errors.tahun.message}
-                                        </h1>
-                                        :
-                                        <h1 className="text-slate-300 text-xs">*Tahun Harus Terisi</h1>
                                     }
                                 </>
                             )}

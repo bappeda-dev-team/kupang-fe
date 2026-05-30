@@ -5,6 +5,7 @@ import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { ButtonSky, ButtonRed } from '@/components/global/Button';
 import { AlertNotification } from "@/components/global/Alert";
 import { getToken } from "@/components/lib/Cookie";
+import { useBrandingContext } from "@/context/BrandingContext";
 import Select from 'react-select';
 import { LoadingClip, LoadingButtonClip } from "@/components/global/Loading";
 import { TbCirclePlus, TbCircleX } from "react-icons/tb";
@@ -34,6 +35,7 @@ export const ModalSubKegiatan: React.FC<ModalProps> = ({ isOpen, onClose, id, me
 
     const [Proses, setProses] = useState<boolean>(false);
     const token = getToken();
+    const { branding } = useBrandingContext();
 
     const handleClose = () => {
         setSubKegiatan('');
@@ -46,7 +48,7 @@ export const ModalSubKegiatan: React.FC<ModalProps> = ({ isOpen, onClose, id, me
         const fetchIdSubKegiatan = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`${API_URL}/sub_kegiatan/detail/${id}`, {
+                const response = await fetch(`${API_URL}/subkegiatans/${id}`, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
@@ -59,14 +61,14 @@ export const ModalSubKegiatan: React.FC<ModalProps> = ({ isOpen, onClose, id, me
                 if (result.code == 500) {
                     setIdNull(true);
                 } else {
-                    const data = result.sub_kegiatan;
+                    const data = result.data;
                     if (data.kode_subkegiatan) {
                         setKode(data.kode_subkegiatan);
                         reset((prev) => ({ ...prev, kode_subkegiatan: data.kode_subkegiatan }));
                     }
-                    if (data.nama_sub_kegiatan) {
-                        setSubKegiatan(data.nama_sub_kegiatan);
-                        reset((prev) => ({ ...prev, nama_subkegiatan: data.nama_sub_kegiatan }));
+                    if (data.nama_subkegiatan) {
+                        setSubKegiatan(data.nama_subkegiatan);
+                        reset((prev) => ({ ...prev, nama_subkegiatan: data.nama_subkegiatan }));
                     }
                 }
             } catch (err) {
@@ -86,21 +88,23 @@ export const ModalSubKegiatan: React.FC<ModalProps> = ({ isOpen, onClose, id, me
             //key : value
             nama_subkegiatan: SubKegiatan,
             kode_subkegiatan: Kode,
+            tahun : String(branding?.tahun?.value ?? ''),
         };
         const formDataEdit = {
             //key : value
             id: id,
             nama_subkegiatan: SubKegiatan,
             kode_subkegiatan: Kode,
+            tahun : String(branding?.tahun?.value ?? ''),
         };
         // console.log(formData);
         // console.log("endpoint", endpoint);
         try {
             let url = "";
             if (metode === "lama") {
-                url = `sub_kegiatan/update/${id}`;
+                url = `subkegiatans/${id}`;
             } else if (metode === "baru") {
-                url = `sub_kegiatan/create`;
+                url = `subkegiatans`;
             } else {
                 url = '';
             }
@@ -120,7 +124,7 @@ export const ModalSubKegiatan: React.FC<ModalProps> = ({ isOpen, onClose, id, me
                 onSuccess();
             } else {
                 console.log(result);
-                AlertNotification("Gagal", `${result.sub_kegiatan}`, "error", 2000);
+                AlertNotification("Gagal", `${result.subkegiatan}`, "error", 2000);
             }
         } catch (err) {
             AlertNotification("Gagal", "Cek koneksi internet / terdapat kesalahan pada server", "error", 2000);
